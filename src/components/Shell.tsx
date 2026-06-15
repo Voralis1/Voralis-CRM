@@ -1,0 +1,54 @@
+import Link from "next/link";
+import SignOut from "@/components/SignOut";
+
+type NavItem = { href: string; label: string };
+
+export default function Shell({
+  nav,
+  title,
+  user,
+  children,
+}: {
+  nav: NavItem[];
+  title: string;
+  user: { email?: string | null; role?: string };
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen">
+      <aside className="flex w-60 flex-col bg-brand-deep px-4 py-6 text-slate-200">
+        <div className="mb-8 px-2">
+          <div className="text-xl font-extrabold tracking-[0.18em] text-white">VORALIS</div>
+          <div className="text-[11px] uppercase tracking-wide text-brand-light">CRM</div>
+        </div>
+        <nav className="flex-1 space-y-1">
+          {nav.map((n) => (
+            <Link
+              key={n.href}
+              href={n.href}
+              className="block rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white"
+            >
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-6 border-t border-white/10 pt-4">
+          <div className="mb-2 px-3 text-xs text-slate-400">
+            {user.email}
+            <span className="ml-1 rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase">
+              {user.role}
+            </span>
+          </div>
+          <div className="px-3"><SignOut /></div>
+        </div>
+      </aside>
+
+      <main className="flex-1 bg-[#fbfcfb]">
+        <header className="border-b border-brand-line bg-white px-8 py-4">
+          <h1 className="text-lg font-semibold text-brand-dark">{title}</h1>
+        </header>
+        <div className="p-8">{children}</div>
+      </main>
+    </div>
+  );
+}

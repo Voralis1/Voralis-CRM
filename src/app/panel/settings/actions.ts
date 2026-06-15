@@ -1,0 +1,41 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { generateApiToken } from "@/lib/api-auth";
+import { revalidatePath } from "next/cache";
+
+async function myAffiliateId(): Promise<string | null> {
+  const supabase = createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return null;
+  const { data } = await supabase
+    .from("affiliates")
+    .select("id")
+    .eq("auth_user_id", auth.user.id)
+    .single();
+  return data?.id ?? null;
+}
+
+export async function savePostback(formData: FormData) {
+  const id = await myAffiliateId();
+  if (!id) return;
+  const url = String(formData.get("postback_url") || "").trim();
+  const method = String(formData.get("postback_method") || "GET");
+  // L'affilié n'édite que sa ligne (RLS), mais on passe par le client session.
+  const supabase = createClient();
+  await supabase
+    .from("affiliates")
+    .update({ postback_url: url || null, postback_method: method })
+    .eq("id", id);
+  revalidatePath("/panel/settings");
+}
+
+export async function regenerateToken() {
+  const id = await myAffiliateId();
+  if (!id) return;
+  // service role pour garantir l'unicité/écriture du token
+  const db = createAdminClient();
+  await db.from("affiliates").update({ api_token: generateApiToken() }).eq("id", id);
+  revalidatePath("/panel/settings");
+}
