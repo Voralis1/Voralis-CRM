@@ -10,6 +10,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const nav = [
     { href: "/admin/dashboard", label: "Tableau de bord" },
     { href: "/admin/orders", label: "Traitement des leads" },
+    { href: "/admin/bulk-update", label: "Mise à jour" },
+    { href: "/admin/products", label: "Gestion de produits" },
+    { href: "/admin/statistics", label: "Statistiques" },
   ];
 
   return (
