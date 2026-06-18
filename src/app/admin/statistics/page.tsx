@@ -1,116 +1,54 @@
 import { createClient } from "@/lib/supabase/server";
-import StatisticsBoard from "./StatisticsBoard.client";
+import StatisticsGrid from "./StatisticsGrid.client";
 
 export const dynamic = "force-dynamic";
-
-type OrderRow = {
-  affiliate_id: string;
-  affiliates: { name: string | null } | null;
-  offer_id: string;
-  offers: { product: string | null } | null;
-  status: string;
-  payout_amount: number | null;
-  created_at: string;
-};
-
-// Statuts considérés comme "facturables" / qualité de lead
-const CONFIRMED = "confirmed";
-const DELIVERED = "delivered";
-const INVALID = new Set(["trash", "duplicate", "rejected", "cancelled", "returned"]);
-
-export interface StatRow {
-  key: string;
-  label: string;
-  total: number;
-  confirmed: number;
-  delivered: number;
-  invalid: number;
-  confirmRate: number;
-  deliveryRate: number;
-  invalidRate: number;
-  payout: number;
-}
-
-function buildStats(
-  rows: OrderRow[],
-  keyOf: (o: OrderRow) => string,
-  labelOf: (o: OrderRow) => string
-): StatRow[] {
-  const map = new Map<string, StatRow>();
-
-  for (const o of rows) {
-    const key = keyOf(o);
-    if (!map.has(key)) {
-      map.set(key, {
-        key,
-        label: labelOf(o),
-        total: 0,
-        confirmed: 0,
-        delivered: 0,
-        invalid: 0,
-        confirmRate: 0,
-        deliveryRate: 0,
-        invalidRate: 0,
-        payout: 0,
-      });
-    }
-    const s = map.get(key)!;
-    s.total += 1;
-    if (o.status === CONFIRMED) s.confirmed += 1;
-    if (o.status === DELIVERED) s.delivered += 1;
-    if (INVALID.has(o.status)) s.invalid += 1;
-    if (o.payout_amount != null) s.payout += Number(o.payout_amount);
-  }
-
-  const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
-
-  return Array.from(map.values())
-    .map((s) => ({
-      ...s,
-      confirmRate: pct(s.confirmed, s.total),
-      deliveryRate: pct(s.delivered, s.total),
-      invalidRate: pct(s.invalid, s.total),
-    }))
-    .sort((a, b) => b.total - a.total);
-}
 
 export default async function StatisticsPage() {
   const supabase = createClient();
 
-  const { data } = await supabase
-    .from("orders")
-    .select(
-      "affiliate_id, affiliates(name), offer_id, offers(product), status, payout_amount, created_at"
-    )
-    .order("created_at", { ascending: false })
-    .limit(5000);
+  const [{ count: totalCount }, { count: confirmedCount }, { count: cancelledCount }] =
+    await Promise.all([
+      supabase.from("orders").select("id", { count: "exact", head: true }),
+      supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "confirmed"),
+      supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["cancelled", "rejected"]),
+    ]);
 
-  const rows = (data ?? []) as unknown as OrderRow[];
+  const total = totalCount ?? 0;
+  const confirmed = confirmedCount ?? 0;
+  const cancelled = cancelledCount ?? 0;
+  const pct = (n: number) => (total > 0 ? Math.round((n / total) * 1000) / 10 : 0);
 
-  const affiliateStats = buildStats(
-    rows,
-    (o) => o.affiliate_id,
-    (o) => o.affiliates?.name ?? "Inconnu"
-  );
-
-  const productStats = buildStats(
-    rows,
-    (o) => o.offers?.product ?? o.offer_id,
-    (o) => o.offers?.product ?? o.offer_id ?? "Inconnu"
-  );
-
-  const totals = {
-    total: rows.length,
-    confirmed: rows.filter((o) => o.status === CONFIRMED).length,
-    delivered: rows.filter((o) => o.status === DELIVERED).length,
-    payout: rows.reduce((acc, o) => acc + Number(o.payout_amount ?? 0), 0),
-  };
+  const cards = [
+    { label: "Commandes totales", value: total.toLocaleString("fr-FR") },
+    { label: "Commandes confirmées", value: confirmed.toLocaleString("fr-FR") },
+    { label: "Taux de confirmation", value: `${pct(confirmed)} %` },
+    { label: "Taux d'annulation", value: `${pct(cancelled)} %` },
+  ];
 
   return (
-    <StatisticsBoard
-      affiliateStats={affiliateStats}
-      productStats={productStats}
-      totals={totals}
-    />
+    <div className="flex h-full flex-col gap-4">
+      <div className="shrink-0">
+        <h1 className="text-2xl font-bold">Statistiques</h1>
+        <p className="text-sm text-slate-500">
+          Performances par produit et par affilié, ventilées par statut de commande.
+        </p>
+      </div>
+
+      <div className="grid shrink-0 grid-cols-2 gap-4 sm:grid-cols-4">
+        {cards.map((c) => (
+          <div key={c.label} className="card p-4">
+            <div className="text-sm text-slate-500">{c.label}</div>
+            <div className="mt-2 text-2xl font-semibold">{c.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="min-h-0 flex-1">
+        <StatisticsGrid />
+      </div>
+    </div>
   );
 }

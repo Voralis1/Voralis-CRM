@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authenticateAffiliate } from "@/lib/api-auth";
 import { leadSchema } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { nextOrderPublicId } from "@/lib/orderId";
 
 export const runtime = "nodejs";
 
@@ -75,28 +76,39 @@ export async function POST(req: Request) {
       { status: 409 }
     );
 
-  // 5) Insertion
-  const { data: created, error } = await db
-    .from("orders")
-    .insert({
-      affiliate_id: auth.affiliate.id,
-      offer_id: lead.offer_id,
-      first_name: lead.first_name,
-      last_name: lead.last_name ?? null,
-      phone: lead.phone,
-      country: lead.country,
-      address: lead.address ?? null,
-      city: lead.city ?? null,
-      quantity: lead.quantity,
-      ip: lead.ip ?? null,
-      user_agent: lead.user_agent ?? null,
-      sub1: lead.sub1 ?? null, sub2: lead.sub2 ?? null, sub3: lead.sub3 ?? null,
-      sub4: lead.sub4 ?? null, sub5: lead.sub5 ?? null,
-      comment: lead.comment ?? null,
-      status: "new",
-    })
-    .select("id, public_id, status")
-    .single();
+  // 5) Insertion avec un identifiant public numérique (retry si collision).
+  const baseRow = {
+    affiliate_id: auth.affiliate.id,
+    offer_id: lead.offer_id,
+    first_name: lead.first_name,
+    last_name: lead.last_name ?? null,
+    phone: lead.phone,
+    country: lead.country,
+    address: lead.address ?? null,
+    city: lead.city ?? null,
+    quantity: lead.quantity,
+    ip: lead.ip ?? null,
+    user_agent: lead.user_agent ?? null,
+    sub1: lead.sub1 ?? null, sub2: lead.sub2 ?? null, sub3: lead.sub3 ?? null,
+    sub4: lead.sub4 ?? null, sub5: lead.sub5 ?? null,
+    comment: lead.comment ?? null,
+    status: "new",
+  };
+
+  let created: { id: string; public_id: string; status: string } | null = null;
+  let error: any = null;
+  for (let attempt = 0; attempt < 4 && !created; attempt++) {
+    const publicId = await nextOrderPublicId(db);
+    const res = await db
+      .from("orders")
+      .insert({ ...baseRow, public_id: publicId })
+      .select("id, public_id, status")
+      .single();
+    created = res.data;
+    error = res.error;
+    // 23505 = violation de contrainte d'unicité (public_id pris) -> on réessaie.
+    if (error?.code !== "23505") break;
+  }
 
   if (error || !created)
     return NextResponse.json(

@@ -15,8 +15,8 @@ export default function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-60 flex-col bg-brand-deep px-4 py-6 text-slate-200">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="flex w-60 shrink-0 flex-col overflow-y-auto bg-brand-deep px-4 py-6 text-slate-200">
         <div className="mb-8 px-2">
           <div className="text-xl font-extrabold tracking-[0.18em] text-white">VORALIS</div>
           <div className="text-[11px] uppercase tracking-wide text-brand-light">CRM</div>
@@ -43,11 +43,11 @@ export default function Shell({
         </div>
       </aside>
 
-      <main className="flex-1 bg-[#fbfcfb]">
-        <header className="border-b border-brand-line bg-white px-8 py-4">
+      <main className="flex flex-1 flex-col overflow-hidden bg-[#fbfcfb]">
+        <header className="shrink-0 border-b border-brand-line bg-white px-8 py-4">
           <h1 className="text-lg font-semibold text-brand-dark">{title}</h1>
         </header>
-        <div className="p-8">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-8">{children}</div>
       </main>
     </div>
   );

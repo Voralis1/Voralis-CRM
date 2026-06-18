@@ -46,7 +46,7 @@ export default function BulkUpdatePage() {
             onChange={(e) => setRawIds(e.target.value)}
             rows={8}
             className="input w-full font-mono text-sm"
-            placeholder={"VL-2026-000001\nVL-2026-000002\nVL-2026-000003"}
+            placeholder={"000001\n000002\n000003"}
           />
           <span className="text-xs text-slate-500">
             Un identifiant par ligne (ou séparés par des virgules / espaces). {ids.length} commande

@@ -14,7 +14,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       nav={[
         { href: "/panel", label: "Tableau de bord" },
         { href: "/panel/leads", label: "Mes leads" },
+        { href: "/panel/products", label: "Produits" },
         { href: "/panel/settings", label: "API & Postback" },
+        { href: "/panel/account", label: "Mon compte" },
       ]}
     >
       {children}

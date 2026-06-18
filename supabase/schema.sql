@@ -94,8 +94,7 @@ create sequence if not exists order_seq start 1;
 create table if not exists orders (
   id             uuid primary key default gen_random_uuid(),
   public_id      text unique not null
-                 default ('VL-' || to_char(now(),'YYYY') || '-' ||
-                          lpad(nextval('order_seq')::text, 6, '0')),
+                 default lpad(nextval('order_seq')::text, 6, '0'),
   affiliate_id   uuid not null references affiliates(id) on delete restrict,
   offer_id       text not null references offers(id) on delete restrict,
   first_name     text not null,

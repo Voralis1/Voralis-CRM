@@ -22,7 +22,8 @@ export default async function PanelLeads() {
       phone,
       address,
       comment,
-      sub1
+      sub1,
+      sub2
     `)
     .order("created_at", { ascending: false })
     .limit(200);

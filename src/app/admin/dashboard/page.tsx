@@ -13,6 +13,11 @@ export default async function AdminDashboard() {
     .select("id", { count: "exact", head: true })
     .eq("status", "confirmed");
 
+  const { count: cancelledCount } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["cancelled", "rejected"]);
+
   const { data: payoutsData } = await supabase
     .from("orders")
     .select("payout_amount")
@@ -94,13 +99,15 @@ export default async function AdminDashboard() {
 
   const total = totalCount ?? 0;
   const confirmed = confirmedCount ?? 0;
+  const cancelled = cancelledCount ?? 0;
   const confirmationRate = total > 0 ? Math.round((confirmed / total) * 10000) / 100 : 0;
+  const cancellationRate = total > 0 ? Math.round((cancelled / total) * 10000) / 100 : 0;
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">Tableau de bord</h1>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="card p-4">
           <div className="text-sm text-slate-500">Nombre total de leads envoyés</div>
           <div className="mt-2 text-2xl font-semibold">{total}</div>
@@ -109,6 +116,11 @@ export default async function AdminDashboard() {
         <div className="card p-4">
           <div className="text-sm text-slate-500">Taux de confirmation</div>
           <div className="mt-2 text-2xl font-semibold">{confirmationRate}%</div>
+        </div>
+
+        <div className="card p-4">
+          <div className="text-sm text-slate-500">Taux d'annulation</div>
+          <div className="mt-2 text-2xl font-semibold">{cancellationRate}%</div>
         </div>
 
         <div className="card p-4">

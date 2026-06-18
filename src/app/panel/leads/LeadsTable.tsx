@@ -2,21 +2,17 @@
 
 import { STATUS_META, type OrderStatus, ALL_STATUSES } from "@/lib/types";
 import { useState } from "react";
-import { updateOrder, createOrder, fetchAffiliates, fetchOffers } from "./actions";
+import { updateOrder, createOrder, deleteOrder, fetchProducts } from "./actions";
 
 interface LeadsTableProps {
   rows: any[];
 }
 
-interface Affiliate {
+interface Product {
   id: string;
   name: string;
-}
-
-interface Offer {
-  id: string;
-  product: string;
-  country: string;
+  price: number | null;
+  country: string | null;
 }
 
 export function LeadsTable({ rows }: LeadsTableProps) {
@@ -24,8 +20,8 @@ export function LeadsTable({ rows }: LeadsTableProps) {
   const [editData, setEditData] = useState<any>({});
   const [isCreating, setIsCreating] = useState(false);
   const [createData, setCreateData] = useState({
-    affiliate_id: "",
-    offer_id: "",
+    affiliate: "",
+    product_id: "",
     first_name: "",
     last_name: "",
     phone: "",
@@ -34,10 +30,11 @@ export function LeadsTable({ rows }: LeadsTableProps) {
     status: "new",
     payout_amount: "",
     comment: "",
-    sub1: "",
+    sub1: "Manuel",
   });
-  const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
-  const [offers, setOffers] = useState<Offer[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [deletingOrder, setDeletingOrder] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleExportExcel = () => {
     // Préparation des données
@@ -47,7 +44,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
         "Produit",
         "Pays",
         "Affiliate network",
-        "ID de l'Affiliate",
+        "Affiliate",
         "Date de réception",
         "Statut",
         "Prix",
@@ -68,7 +65,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           offers?.product ?? "",
           o.country,
           affiliates?.name ?? "",
-          o.affiliate_id,
+          o.sub2 ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
           meta?.label ?? o.status,
           o.payout_amount != null ? Number(o.payout_amount).toFixed(2) : "",
@@ -95,26 +92,48 @@ export function LeadsTable({ rows }: LeadsTableProps) {
   };
 
   const handleCreateClick = async () => {
-    const [affiliatesList, offersList] = await Promise.all([
-      fetchAffiliates(),
-      fetchOffers(),
-    ]);
-    setAffiliates(affiliatesList);
-    setOffers(offersList);
+    const productsList = await fetchProducts();
+    setProducts(productsList);
     setIsCreating(true);
   };
 
-  const handleEditClick = (order: any) => {
+  const handleEditClick = async (order: any) => {
+    // Charge les produits pour permettre de changer de produit en édition.
+    if (products.length === 0) {
+      try {
+        setProducts(await fetchProducts());
+      } catch {
+        /* ignore */
+      }
+    }
     setEditingId(order.id);
     setEditData({
-      first_name: order.first_name,
-      last_name: order.last_name,
-      phone: order.phone,
-      address: order.address,
-      country: order.country,
-      comment: order.comment,
-      payout_amount: order.payout_amount,
+      first_name: order.first_name ?? "",
+      last_name: order.last_name ?? "",
+      phone: order.phone ?? "",
+      address: order.address ?? "",
+      country: order.country ?? "",
+      comment: order.comment ?? "",
+      payout_amount: order.payout_amount ?? "",
+      status: order.status ?? "new",
+      sub1: order.sub1 ?? "",
+      affiliate: order.sub2 ?? "",
+      product_id: order.offer_id ?? "",
     });
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingOrder) return;
+    setIsDeleting(true);
+    try {
+      await deleteOrder(deletingOrder.id);
+      setDeletingOrder(null);
+      window.location.reload();
+    } catch (error) {
+      alert(`Erreur: ${error}`);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -130,13 +149,13 @@ export function LeadsTable({ rows }: LeadsTableProps) {
 
   const handleSaveCreate = async () => {
     try {
-      if (!createData.affiliate_id || !createData.offer_id) {
-        alert("Veuillez remplir au moins l'affiliate et l'offre");
+      if (!createData.affiliate || !createData.product_id) {
+        alert("Veuillez renseigner l'affiliate et le produit");
         return;
       }
       await createOrder({
-        affiliate_id: createData.affiliate_id,
-        offer_id: createData.offer_id,
+        affiliate: createData.affiliate,
+        product_id: createData.product_id,
         first_name: createData.first_name,
         last_name: createData.last_name,
         phone: createData.phone,
@@ -180,26 +199,22 @@ export function LeadsTable({ rows }: LeadsTableProps) {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Affiliate Network *
-                  </label>
-                  <select
-                    value={createData.affiliate_id}
+                  <label className="block text-sm font-medium mb-1">Affiliate *</label>
+                  <input
+                    type="text"
+                    value={createData.affiliate}
                     onChange={(e) =>
                       setCreateData({
                         ...createData,
-                        affiliate_id: e.target.value,
+                        affiliate: e.target.value,
                       })
                     }
+                    placeholder="Sous-composant de l'affiliate network"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  >
-                    <option value="">-- Sélectionner --</option>
-                    {affiliates.map((aff) => (
-                      <option key={aff.id} value={aff.id}>
-                        {aff.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Identifiant libre, réutilisable sur plusieurs leads.
+                  </p>
                 </div>
 
                 <div>
@@ -207,16 +222,18 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                     Produit *
                   </label>
                   <select
-                    value={createData.offer_id}
+                    value={createData.product_id}
                     onChange={(e) =>
-                      setCreateData({ ...createData, offer_id: e.target.value })
+                      setCreateData({ ...createData, product_id: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                   >
                     <option value="">-- Sélectionner --</option>
-                    {offers.map((offer) => (
-                      <option key={offer.id} value={offer.id}>
-                        {offer.product} ({offer.id})
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name}
+                        {product.country ? ` — ${product.country}` : ""}
+                        {product.price != null ? ` (${Number(product.price).toFixed(2)} €)` : ""}
                       </option>
                     ))}
                   </select>
@@ -348,20 +365,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Source</label>
-                <select
-                  value={createData.sub1}
-                  onChange={(e) =>
-                    setCreateData({ ...createData, sub1: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                >
-                  <option value="API">API</option>
-                  <option value="Manuel">Manuel</option>
-                </select>
-              </div>
-
               <div className="flex gap-2 justify-end pt-4">
                 <button
                   onClick={() => setIsCreating(false)}
@@ -386,6 +389,71 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             <h2 className="text-xl font-bold mb-4">Modifier le lead</h2>
             <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Affiliate</label>
+                  <input
+                    type="text"
+                    value={editData.affiliate || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, affiliate: e.target.value })
+                    }
+                    placeholder="Sous-composant de l'affiliate network"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Produit</label>
+                  <select
+                    value={editData.product_id || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, product_id: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name}
+                        {product.country ? ` — ${product.country}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Statut</label>
+                  <select
+                    value={editData.status || "new"}
+                    onChange={(e) =>
+                      setEditData({ ...editData, status: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  >
+                    {ALL_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {STATUS_META[status].label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Source</label>
+                  <input
+                    type="text"
+                    value={editData.sub1 || ""}
+                    onChange={(e) =>
+                      setEditData({ ...editData, sub1: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
                 <input
@@ -497,15 +565,44 @@ export function LeadsTable({ rows }: LeadsTableProps) {
         </div>
       )}
 
-      <div className="card overflow-hidden">
-        <table className="w-full">
+      {deletingOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-2">Supprimer le lead</h2>
+            <p className="text-sm text-slate-600">
+              Êtes-vous sûr de vouloir supprimer définitivement le lead{" "}
+              <span className="font-mono font-semibold">{deletingOrder.public_id}</span> ? Cette action
+              est irréversible.
+            </p>
+            <div className="flex gap-2 justify-end pt-6">
+              <button
+                onClick={() => setDeletingOrder(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-medium disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50"
+              >
+                {isDeleting ? "Suppression…" : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[1400px]">
           <thead className="bg-brand-mist">
             <tr>
               <th className="th">ID de la commande</th>
               <th className="th">Produit</th>
               <th className="th">Pays</th>
               <th className="th">Affiliate network</th>
-              <th className="th">ID de l'Affiliate</th>
+              <th className="th">Affiliate</th>
               <th className="th">Date de réception</th>
               <th className="th">status de la dernière mise à jour</th>
               <th className="th">Prix</th>
@@ -530,9 +627,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                   <td className="td">{offers?.product ?? "—"}</td>
                   <td className="td">{o.country}</td>
                   <td className="td">{affiliates?.name ?? "—"}</td>
-                  <td className="td font-mono text-xs text-slate-500">
-                    {o.affiliate_id}
-                  </td>
+                  <td className="td">{o.sub2 ?? "—"}</td>
                   <td className="td text-xs text-slate-500">
                     {new Date(o.created_at).toLocaleString("fr-FR")}
                   </td>
@@ -556,12 +651,20 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                     {o.sub1 ?? "—"}
                   </td>
                   <td className="td">
-                    <button
-                      onClick={() => handleEditClick(o)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Éditer
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleEditClick(o)}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Éditer
+                      </button>
+                      <button
+                        onClick={() => setDeletingOrder(o)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

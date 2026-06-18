@@ -7,11 +7,18 @@ export async function GET() {
   const db = createAdminClient();
   const { data, error } = await db
     .from("projects")
-    .select("id, name, created_at, expires_at, product_count")
+    .select("id, name, created_at, expires_at")
     .order("created_at", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: "Impossible de récupérer les projets" }, { status: 500 });
+  }
+
+  // Compte réel des produits créés par projet (table project_products).
+  const { data: productRows } = await db.from("project_products").select("project_id");
+  const counts = new Map<string, number>();
+  for (const row of productRows || []) {
+    counts.set(row.project_id, (counts.get(row.project_id) ?? 0) + 1);
   }
 
   const projects = (data || []).map((project: any) => ({
@@ -19,7 +26,7 @@ export async function GET() {
     name: project.name,
     createdAt: project.created_at?.slice(0, 10) ?? null,
     expiresAt: project.expires_at?.slice(0, 10) ?? null,
-    productCount: String(project.product_count ?? 0),
+    productCount: String(counts.get(project.id) ?? 0),
   }));
 
   return NextResponse.json({ projects });

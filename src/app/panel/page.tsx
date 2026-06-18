@@ -27,14 +27,18 @@ export default async function PanelDashboard() {
     .filter((r) => r.payout_amount != null)
     .reduce((s, r) => s + Number(r.payout_amount), 0);
 
+  const cancelled = count("cancelled") + count("rejected");
+
   const confRate = total ? Math.round((confirmed / total) * 100) : 0;
   const delivRate = confirmed ? Math.round((delivered / confirmed) * 100) : 0;
+  const cancRate = total ? Math.round((cancelled / total) * 100) : 0;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <Kpi label="Leads envoyés" value={String(total)} />
         <Kpi label="Taux de confirmation" value={`${confRate}%`} sub={`${confirmed} confirmés`} />
+        <Kpi label="Taux d'annulation" value={`${cancRate}%`} sub={`${cancelled} annulés`} />
         <Kpi label="Taux de livraison" value={`${delivRate}%`} sub={`${delivered} livrés`} />
         <Kpi label="Commissions validées" value={`$${validated.toFixed(2)}`} sub="statuts facturables" />
       </div>
