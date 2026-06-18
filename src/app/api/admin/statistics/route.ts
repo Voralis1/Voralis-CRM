@@ -97,7 +97,7 @@ export async function GET(req: Request) {
   const db = createAdminClient();
   const { data, error } = await db
     .from("orders")
-    .select("offer_id, offers(product, payout), affiliate_id, affiliates(name), status, payout_amount, quantity")
+    .select("offer_id, offers(product, payout), affiliate_id, affiliates(name), sub2, status, payout_amount, quantity")
     .limit(10000);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -107,17 +107,17 @@ export async function GET(req: Request) {
   for (const o of (data ?? []) as any[]) {
     const product = o.offers?.product ?? o.offer_id ?? "—";
     const price = Number(o.offers?.payout ?? 0);
-    const affiliate = o.affiliate_id ?? "—";
-    const network = o.affiliates?.name ?? "Inconnu";
+    const network = o.affiliates?.name ?? "Inconnu"; // affiliate network = compte
+    const affiliate = (o.sub2 && String(o.sub2).trim()) || "—"; // sous-composant
     const dimVals: Record<TextDim, string> = {
       product,
       affiliateNetwork: network,
       affiliate,
     };
 
-    // Clé d'agrégation selon « groupBy » (none = produit × affilié).
+    // Clé d'agrégation selon « groupBy » (none = produit × network × affilié).
     let key: string;
-    if (groupBy === "none") key = `${product}||${affiliate}`;
+    if (groupBy === "none") key = `${product}||${network}||${affiliate}`;
     else if (groupBy === "price") key = `price:${price}`;
     else key = dimVals[groupBy];
 

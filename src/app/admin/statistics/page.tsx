@@ -29,15 +29,15 @@ export default async function StatisticsPage() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="shrink-0">
+    <div className="space-y-4">
+      <div>
         <h1 className="text-2xl font-bold">Statistiques</h1>
         <p className="text-sm text-slate-500">
           Performances par produit et par affilié, ventilées par statut de commande.
         </p>
       </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {cards.map((c) => (
           <div key={c.label} className="card p-4">
             <div className="text-sm text-slate-500">{c.label}</div>
@@ -46,9 +46,7 @@ export default async function StatisticsPage() {
         ))}
       </div>
 
-      <div className="min-h-0 flex-1">
-        <StatisticsGrid />
-      </div>
+      <StatisticsGrid />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -8,7 +8,6 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   LEAD_COLUMNS,
   STATUS_GROUPS,
@@ -62,8 +61,6 @@ export default function StatisticsGrid() {
   const [filtersDraft, setFiltersDraft] = useState<Record<string, string>>({});
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [groupBy, setGroupBy] = useState<GroupByKey>("none");
-
-  const parentRef = useRef<HTMLDivElement>(null);
 
   // Anti-rebond : on n'interroge le serveur que 350 ms après la dernière frappe.
   useEffect(() => {
@@ -155,15 +152,6 @@ export default function StatisticsGrid() {
   });
 
   const rows = table.getRowModel().rows;
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 36,
-    overscan: 12,
-  });
-  const virtualRows = rowVirtualizer.getVirtualItems();
-  const totalSize = rowVirtualizer.getTotalSize();
-
   const totalWidth = table.getTotalSize();
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
@@ -175,8 +163,8 @@ export default function StatisticsGrid() {
   });
 
   return (
-    <div className="card flex h-full flex-col gap-3 p-3">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 text-sm">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2">
             <span className="font-medium text-slate-600">Grouper par</span>
@@ -234,11 +222,10 @@ export default function StatisticsGrid() {
         </div>
       </div>
 
-      {/* Conteneur scrollable : header fixe + colonne figée + scroll horizontal */}
-      <div
-        ref={parentRef}
-        className="relative min-h-0 flex-1 overflow-auto rounded-lg border border-slate-200"
-      >
+      {/* Scroll horizontal au niveau du tableau ; le scroll vertical reste au
+          niveau de la page (le conteneur n'a pas de hauteur fixe). La colonne
+          Product reste figée pendant le défilement horizontal. */}
+      <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table style={{ display: "grid", width: totalWidth, minWidth: "100%" }} className="text-xs">
           <thead
             style={{ display: "grid", position: "sticky", top: 0, zIndex: 3 }}
@@ -351,19 +338,12 @@ export default function StatisticsGrid() {
             </tr>
           </thead>
 
-          <tbody style={{ display: "grid", height: totalSize, position: "relative" }}>
-            {virtualRows.map((vRow) => {
-              const row = rows[vRow.index];
+          <tbody style={{ display: "grid" }}>
+            {rows.map((row) => {
               return (
                 <tr
                   key={row.id}
-                  data-index={vRow.index}
-                  style={{
-                    display: "flex",
-                    position: "absolute",
-                    transform: `translateY(${vRow.start}px)`,
-                    width: "100%",
-                  }}
+                  style={{ display: "flex", width: "100%" }}
                   className="border-b border-slate-100 hover:bg-brand-mist/40"
                 >
                   {row.getVisibleCells().map((cell) => {

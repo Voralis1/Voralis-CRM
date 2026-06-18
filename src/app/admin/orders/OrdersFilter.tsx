@@ -18,6 +18,7 @@ export interface OrderFilters {
 }
 
 export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
+  const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<OrderFilters>({
     public_id: "",
     product: "",
@@ -28,6 +29,8 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
     phone: "",
     source: "",
   });
+
+  const activeCount = Object.values(filters).filter((v) => v.trim() !== "").length;
 
   const handleChange = (key: keyof OrderFilters, value: string) => {
     const newFilters = { ...filters, [key]: value };
@@ -51,14 +54,34 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
   };
 
   return (
-    <div className="card p-4 space-y-3">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-slate-700">Filtres</h3>
-        <button onClick={handleReset} className="text-xs text-slate-500 hover:text-slate-700">
-          Réinitialiser
+    <div className="card p-4">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-2 font-semibold text-slate-700"
+        >
+          <span
+            className={`inline-block text-xs transition-transform ${open ? "rotate-90" : ""}`}
+          >
+            ▶
+          </span>
+          Filtres
+          {activeCount > 0 && (
+            <span className="rounded-full bg-brand-600 px-2 py-0.5 text-xs font-medium text-white">
+              {activeCount}
+            </span>
+          )}
         </button>
+        {open && (
+          <button onClick={handleReset} className="text-xs text-slate-500 hover:text-slate-700">
+            Réinitialiser
+          </button>
+        )}
       </div>
 
+      {!open ? null : (
+      <div className="mt-3 space-y-3">
       <div className="grid grid-cols-4 gap-2">
         <input
           type="text"
@@ -120,6 +143,8 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
           className="input text-sm"
         />
       </div>
+      </div>
+      )}
     </div>
   );
 }
