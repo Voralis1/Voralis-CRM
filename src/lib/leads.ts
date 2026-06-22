@@ -43,7 +43,25 @@ export async function ingestLead(
   if (dup)
     return { ok: false, code: 409, error_code: "DUPLICATE_LEAD", message: `Lead déjà existant (${dup.public_id})` };
 
-  // 3) Insertion avec un identifiant public numérique (retry si collision).
+  // 3a) Prix : récupéré depuis le catalogue (project_products) par nom de produit
+  //     (correspondance exacte, insensible à la casse). Pas de produit ou pas de
+  //     correspondance -> prix laissé vide (saisie manuelle possible ensuite).
+  let payoutAmount: number | null = null;
+  let payoutCurrency: string | null = null;
+  if (lead.product) {
+    const { data: prod } = await db
+      .from("project_products")
+      .select("price")
+      .ilike("name", lead.product)
+      .limit(1)
+      .maybeSingle();
+    if (prod?.price != null) {
+      payoutAmount = Number(prod.price);
+      payoutCurrency = "USD";
+    }
+  }
+
+  // 4) Insertion avec un identifiant public numérique (retry si collision).
   const baseRow = {
     affiliate_id: affiliateId,
     offer_id: lead.offer_id ?? null,
@@ -57,9 +75,12 @@ export async function ingestLead(
     quantity: lead.quantity,
     ip: lead.ip ?? null,
     user_agent: lead.user_agent ?? null,
-    sub1: lead.sub1 ?? null, sub2: lead.sub2 ?? null, sub3: lead.sub3 ?? null,
+    affiliate: lead.affiliate,
+    sub3: lead.sub3 ?? null,
     sub4: lead.sub4 ?? null, sub5: lead.sub5 ?? null,
     comment: lead.comment ?? null,
+    payout_amount: payoutAmount,
+    payout_currency: payoutCurrency,
     status: "new",
   };
 
@@ -88,6 +109,14 @@ export async function ingestLead(
     to_status: "new",
     note: "Lead reçu via API",
   });
+
+  // Registre des affiliés : garantit que le sous-affilié (affiliate) existe dans
+  // la table `affiliate`, rattaché au réseau (affiliateId).
+  if (lead.affiliate) {
+    await db
+      .from("affiliate")
+      .upsert({ name: lead.affiliate, network_id: affiliateId }, { onConflict: "network_id,name", ignoreDuplicates: true });
+  }
 
   return { ok: true, lead_id: created.public_id, status: created.status };
 }

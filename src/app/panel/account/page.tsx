@@ -8,7 +8,7 @@ export default async function PanelAccount() {
   const supabase = createClient();
   const { data: auth } = await supabase.auth.getUser();
   const { data: aff } = await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .select("name, email, status, created_at")
     .eq("auth_user_id", auth.user!.id)
     .maybeSingle();

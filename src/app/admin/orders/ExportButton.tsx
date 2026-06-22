@@ -12,7 +12,7 @@ export function ExportButton({ rows }: ExportButtonProps) {
         "Produit",
         "Pays",
         "Affiliate network",
-        "ID de l'Affiliate",
+        "Affiliate",
         "Date de réception",
         "Status",
         "Prix",
@@ -20,11 +20,10 @@ export function ExportButton({ rows }: ExportButtonProps) {
         "Téléphone",
         "Adresse",
         "Informations additionnelles",
-        "Source",
       ],
       ...rows.map((o) => {
         const offers = o.offers as any;
-        const affiliates = o.affiliates as any;
+        const affiliates = o.affiliate_network as any;
         const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
         return [
@@ -32,7 +31,7 @@ export function ExportButton({ rows }: ExportButtonProps) {
           o.product ?? offers?.product ?? "",
           o.country ?? "",
           affiliates?.name ?? "",
-          o.affiliate_id,
+          o.affiliate ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
           o.status,
           o.payout_amount != null ? Number(o.payout_amount).toFixed(2) : "",
@@ -40,7 +39,6 @@ export function ExportButton({ rows }: ExportButtonProps) {
           o.phone,
           o.address ?? "",
           o.comment ?? "",
-          o.sub1 ?? "",
         ];
       }),
     ]

@@ -106,9 +106,8 @@ export async function POST(req: Request) {
     quantity: pickGood(b, "quantity") || b.quantity || 1,
     ip: b.ip || undefined,
     user_agent: req.headers.get("user-agent") || b.user_agent || undefined,
-    // externalWebmaster = identifiant du sous-affilié -> sub2 (tracking)
-    sub1: b.sub1 || b.utm_source || undefined,
-    sub2: b.sub2 || b.externalWebmaster || undefined,
+    // externalWebmaster = identifiant de l'affilié -> affiliate (obligatoire)
+    affiliate: b.affiliate || b.externalWebmaster || undefined,
     sub3: b.sub3 || b.utm_campaign || undefined,
     sub4: b.sub4 || b.utm_medium || undefined,
     sub5: b.sub5 || b.utm_content || undefined,

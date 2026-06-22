@@ -10,7 +10,7 @@ async function myAffiliateId(): Promise<string | null> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return null;
   const { data } = await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .select("id")
     .eq("auth_user_id", auth.user.id)
     .single();
@@ -25,7 +25,7 @@ export async function savePostback(formData: FormData) {
   // L'affilié n'édite que sa ligne (RLS), mais on passe par le client session.
   const supabase = createClient();
   await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .update({ postback_url: url || null, postback_method: method })
     .eq("id", id);
   revalidatePath("/panel/settings");
@@ -36,6 +36,6 @@ export async function regenerateToken() {
   if (!id) return;
   // service role pour garantir l'unicité/écriture du token
   const db = createAdminClient();
-  await db.from("affiliates").update({ api_token: generateApiToken() }).eq("id", id);
+  await db.from("affiliate_network").update({ api_token: generateApiToken() }).eq("id", id);
   revalidatePath("/panel/settings");
 }

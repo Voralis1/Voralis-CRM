@@ -30,7 +30,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
     status: "new",
     payout_amount: "",
     comment: "",
-    sub1: "Manuel",
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [deletingOrder, setDeletingOrder] = useState<any | null>(null);
@@ -52,12 +51,11 @@ export function LeadsTable({ rows }: LeadsTableProps) {
         "Téléphone",
         "Adresse",
         "Informations additionnelles",
-        "Source",
       ],
       ...rows.map((o) => {
         const meta = STATUS_META[o.status as OrderStatus];
         const offers = o.offers as any;
-        const affiliates = o.affiliates as any;
+        const affiliates = o.affiliate_network as any;
         const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
         return [
@@ -65,7 +63,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           o.product ?? offers?.product ?? "",
           o.country ?? "",
           affiliates?.name ?? "",
-          o.sub2 ?? "",
+          o.affiliate ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
           meta?.label ?? o.status,
           o.payout_amount != null ? Number(o.payout_amount).toFixed(2) : "",
@@ -73,7 +71,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           o.phone,
           o.address ?? "",
           o.comment ?? "",
-          o.sub1 ?? "",
         ];
       }),
     ]
@@ -116,8 +113,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
       comment: order.comment ?? "",
       payout_amount: order.payout_amount ?? "",
       status: order.status ?? "new",
-      sub1: order.sub1 ?? "",
-      affiliate: order.sub2 ?? "",
+      affiliate: order.affiliate ?? "",
       product_id: order.offer_id ?? "",
     });
   };
@@ -166,7 +162,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           ? parseFloat(createData.payout_amount as any)
           : undefined,
         comment: createData.comment || undefined,
-        sub1: createData.sub1 || undefined,
       });
       setIsCreating(false);
       window.location.reload();
@@ -223,9 +218,18 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                   </label>
                   <select
                     value={createData.product_id}
-                    onChange={(e) =>
-                      setCreateData({ ...createData, product_id: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const selected = products.find((p) => p.id === e.target.value);
+                      setCreateData({
+                        ...createData,
+                        product_id: e.target.value,
+                        // Pré-remplit le prix avec celui du produit choisi.
+                        payout_amount:
+                          selected?.price != null
+                            ? String(selected.price)
+                            : createData.payout_amount,
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                   >
                     <option value="">-- Sélectionner --</option>
@@ -440,18 +444,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                     ))}
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Source</label>
-                  <input
-                    type="text"
-                    value={editData.sub1 || ""}
-                    onChange={(e) =>
-                      setEditData({ ...editData, sub1: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  />
-                </div>
               </div>
 
               <div>
@@ -610,7 +602,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
               <th className="th">Téléphone</th>
               <th className="th">Adresse</th>
               <th className="th">Informations additionnelles</th>
-              <th className="th">Source</th>
               <th className="th">Action</th>
             </tr>
           </thead>
@@ -618,7 +609,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
             {rows.map((o) => {
               const meta = STATUS_META[o.status as OrderStatus];
               const offers = o.offers as any;
-              const affiliates = o.affiliates as any;
+              const affiliates = o.affiliate_network as any;
               const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
               return (
@@ -627,7 +618,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                   <td className="td">{o.product ?? offers?.product ?? "—"}</td>
                   <td className="td">{o.country}</td>
                   <td className="td">{affiliates?.name ?? "—"}</td>
-                  <td className="td">{o.sub2 ?? "—"}</td>
+                  <td className="td">{o.affiliate ?? "—"}</td>
                   <td className="td text-xs text-slate-500">
                     {new Date(o.created_at).toLocaleString("fr-FR")}
                   </td>
@@ -647,9 +638,6 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                   <td className="td">{o.phone}</td>
                   <td className="td text-sm">{o.address ?? "—"}</td>
                   <td className="td text-sm">{o.comment ?? "—"}</td>
-                  <td className="td font-mono text-xs text-slate-500">
-                    {o.sub1 ?? "—"}
-                  </td>
                   <td className="td">
                     <div className="flex gap-3">
                       <button
@@ -673,7 +661,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
               <tr>
                 <td
                   className="td text-center text-slate-400"
-                  colSpan={14}
+                  colSpan={13}
                 >
                   Aucun lead pour le moment.
                 </td>

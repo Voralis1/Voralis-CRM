@@ -1,14 +1,16 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateApiToken } from "@/lib/api-auth";
 import { getProfile } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function toggleAffiliate(id: string, status: string) {
-  const supabase = createClient();
-  await supabase.from("affiliates").update({ status }).eq("id", id);
+  const profile = await getProfile();
+  if (!profile || profile.role !== "admin") throw new Error("Accès refusé");
+  // Service role : affiliate_network n'a pas de policy d'écriture admin via RLS.
+  const db = createAdminClient();
+  await db.from("affiliate_network").update({ status }).eq("id", id);
   revalidatePath("/admin/affiliates");
 }
 
@@ -23,7 +25,7 @@ export async function createAffiliate(formData: FormData) {
   const postbackUrl = String(formData.get("postback_url") || "").trim() || null;
 
   const db = createAdminClient();
-  await db.from("affiliates").insert({
+  await db.from("affiliate_network").insert({
     name,
     email,
     postback_url: postbackUrl,
@@ -39,6 +41,6 @@ export async function regenerateToken(id: string) {
   if (!profile || profile.role !== "admin") throw new Error("Accès refusé");
 
   const db = createAdminClient();
-  await db.from("affiliates").update({ api_token: generateApiToken() }).eq("id", id);
+  await db.from("affiliate_network").update({ api_token: generateApiToken() }).eq("id", id);
   revalidatePath("/admin/affiliates");
 }

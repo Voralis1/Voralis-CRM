@@ -48,8 +48,7 @@ export async function updateOrder(orderId: string, data: {
   comment?: string;
   payout_amount?: number | null;
   status?: string;
-  sub1?: string;        // Source
-  affiliate?: string;   // sous-composant -> sub2
+  affiliate?: string;   // sous-affilié -> colonne `affiliate`
   product_id?: string;  // change de produit (re-provisionne l'offre)
 }) {
   // Service-role : la RLS réserve l'UPDATE d'orders au staff (admin/agent).
@@ -64,8 +63,7 @@ export async function updateOrder(orderId: string, data: {
   if (data.comment !== undefined) patch.comment = data.comment;
   if (data.payout_amount !== undefined) patch.payout_amount = data.payout_amount;
   if (data.status !== undefined) patch.status = data.status;
-  if (data.sub1 !== undefined) patch.sub1 = data.sub1;
-  if (data.affiliate !== undefined) patch.sub2 = data.affiliate?.trim() || null;
+  if (data.affiliate !== undefined) patch.affiliate = data.affiliate?.trim() || null;
   if (data.product_id) patch.offer_id = await ensureOfferForProduct(db, data.product_id);
 
   const { error } = await db.from("orders").update(patch).eq("id", orderId);
@@ -101,7 +99,6 @@ export async function createOrder(data: {
   status: string;
   payout_amount?: number;
   comment?: string;
-  sub1?: string;
 }) {
   // Service-role : provisionne l'offre liée au produit puis insère la commande
   // (la table orders n'a pas de politique d'insertion pour les affiliés).
@@ -112,7 +109,7 @@ export async function createOrder(data: {
   const { data: authData } = await session.auth.getUser();
   if (!authData.user) throw new Error("Non authentifié.");
   const { data: network } = await db
-    .from("affiliates")
+    .from("affiliate_network")
     .select("id")
     .eq("auth_user_id", authData.user.id)
     .maybeSingle();
@@ -122,7 +119,7 @@ export async function createOrder(data: {
   const offerId = await ensureOfferForProduct(db, data.product_id);
 
   // 3) Insérer la commande avec un identifiant public numérique.
-  //    L'« affiliate » (sous-composant) est stocké en texte libre dans sub2.
+  //    L'« affiliate » (sous-affilié) est stocké en texte libre dans `affiliate`.
   const publicId = await nextOrderPublicId(db);
   const { error } = await db.from("orders").insert([
     {
@@ -137,13 +134,20 @@ export async function createOrder(data: {
       status: data.status,
       payout_amount: data.payout_amount,
       comment: data.comment,
-      sub1: data.sub1,
-      sub2: data.affiliate?.trim() || null,
+      affiliate: data.affiliate?.trim() || null,
     },
   ]);
 
   if (error) {
     throw new Error(`Erreur de création: ${error.message}`);
+  }
+
+  // Registre des affiliés : garantit que le sous-affilié (affiliate) existe.
+  const affiliateName = data.affiliate?.trim();
+  if (affiliateName) {
+    await db
+      .from("affiliate")
+      .upsert({ name: affiliateName, network_id: network.id }, { onConflict: "network_id,name", ignoreDuplicates: true });
   }
 
   return { success: true };
@@ -153,7 +157,7 @@ export async function fetchAffiliates() {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .select("id, name")
     .eq("status", "active");
 

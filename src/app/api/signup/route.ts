@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   // 2) Créer la fiche affilié liée + token
   const token = generateApiToken();
-  const { error: affErr } = await db.from("affiliates").insert({
+  const { error: affErr } = await db.from("affiliate_network").insert({
     auth_user_id: userRes.user.id,
     name,
     email,

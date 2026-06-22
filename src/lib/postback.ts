@@ -11,7 +11,7 @@ type DispatchRow = {
   max_attempts: number;
 };
 
-// Remplace les macros {lead_id}, {status}, {payout}, {sub1}.. par les vraies valeurs.
+// Remplace les macros {lead_id}, {status}, {payout}, {affiliate}, {sub3}.. par les vraies valeurs.
 function resolveTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, key) =>
     encodeURIComponent(vars[key] ?? "")
@@ -31,8 +31,7 @@ function buildVars(order: any, offer: any): Record<string, string> {
     currency: order.payout_currency ?? offer?.currency ?? "USD",
     quantity: String(order.quantity ?? 1),
     comment: order.comment ?? "",
-    sub1: order.sub1 ?? "",
-    sub2: order.sub2 ?? "",
+    affiliate: order.affiliate ?? "",
     sub3: order.sub3 ?? "",
     sub4: order.sub4 ?? "",
     sub5: order.sub5 ?? "",
@@ -75,7 +74,7 @@ export async function dispatchPending(limit = 25): Promise<{
     const { data: order } = await db
       .from("orders").select("*").eq("id", pb.order_id).single();
     const { data: aff } = await db
-      .from("affiliates").select("*").eq("id", pb.affiliate_id).single();
+      .from("affiliate_network").select("*").eq("id", pb.affiliate_id).single();
 
     if (!order || !aff || !aff.postback_url) {
       await db.from("postbacks")

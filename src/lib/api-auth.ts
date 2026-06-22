@@ -16,7 +16,7 @@ export async function authenticateToken(
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .select("*")
     .eq("api_token", clean)
     .single();

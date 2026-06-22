@@ -13,7 +13,7 @@ export default async function PanelLeads() {
       offers(product),
       country,
       affiliate_id,
-      affiliates(name),
+      affiliate_network(name),
       created_at,
       updated_at,
       status,
@@ -23,8 +23,7 @@ export default async function PanelLeads() {
       phone,
       address,
       comment,
-      sub1,
-      sub2
+      affiliate
     `)
     .order("created_at", { ascending: false })
     .limit(200);

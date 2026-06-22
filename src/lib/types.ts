@@ -79,8 +79,8 @@ export type Order = {
   city: string | null;
   quantity: number;
   ip: string | null;
-  sub1: string | null; sub2: string | null; sub3: string | null;
-  sub4: string | null; sub5: string | null;
+  affiliate: string | null;
+  sub3: string | null; sub4: string | null; sub5: string | null;
   comment: string | null;
   status: OrderStatus;
   payout_amount: number | null;

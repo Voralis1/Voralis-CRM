@@ -14,7 +14,6 @@ export interface OrderFilters {
   status: string;
   first_name: string;
   phone: string;
-  source: string;
 }
 
 export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
@@ -27,7 +26,6 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
     status: "",
     first_name: "",
     phone: "",
-    source: "",
   });
 
   const activeCount = Object.values(filters).filter((v) => v.trim() !== "").length;
@@ -47,7 +45,6 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
       status: "",
       first_name: "",
       phone: "",
-      source: "",
     };
     setFilters(emptyFilters);
     onFiltersChange(emptyFilters);
@@ -133,13 +130,6 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
           placeholder="Téléphone"
           value={filters.phone}
           onChange={(e) => handleChange("phone", e.target.value)}
-          className="input text-sm"
-        />
-        <input
-          type="text"
-          placeholder="Source"
-          value={filters.source}
-          onChange={(e) => handleChange("source", e.target.value)}
           className="input text-sm"
         />
       </div>

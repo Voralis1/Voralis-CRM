@@ -6,7 +6,7 @@ export default async function PanelSettings() {
   const supabase = createClient();
   const { data: auth } = await supabase.auth.getUser();
   const { data: aff } = await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .select("api_token, postback_url, postback_method, signature_secret")
     .eq("auth_user_id", auth.user!.id)
     .single();
@@ -69,7 +69,7 @@ export default async function PanelSettings() {
               <li><code>quantity</code></li>
               <li><code>ip</code></li>
               <li><code>user_agent</code></li>
-              <li><code>sub1</code> ... <code>sub5</code></li>
+              <li><code>sub3</code> ... <code>sub5</code></li>
               <li><code>comment</code></li>
             </ul>
           </div>
@@ -109,7 +109,7 @@ export default async function PanelSettings() {
     "quantity":1,
     "ip":"1.2.3.4",
     "user_agent":"MyAgent/1.0",
-    "sub1":"API",
+    "affiliate":"3379",
     "comment":"Test"
   }'`}
             </div>
@@ -121,14 +121,14 @@ export default async function PanelSettings() {
         <h2 className="text-base font-semibold text-brand-dark">URL de postback</h2>
         <p className="mb-3 mt-1 text-sm text-slate-500">
           Macros disponibles : <code className="font-mono text-xs">
-          {"{lead_id} {status} {payout} {currency} {offer_id} {country} {sub1}…{sub5} {timestamp}"}</code>
+          {"{lead_id} {status} {payout} {currency} {offer_id} {country} {affiliate} {sub3}…{sub5} {timestamp}"}</code>
         </p>
         <form action={savePostback} className="space-y-3">
           <input
             className="input font-mono text-xs"
             name="postback_url"
             defaultValue={aff?.postback_url ?? ""}
-            placeholder="https://votre-tracker.com/postback?clickid={sub1}&status={status}&payout={payout}"
+            placeholder="https://votre-tracker.com/postback?affiliate={affiliate}&status={status}&payout={payout}"
           />
           <div className="flex items-center gap-3">
             <select className="input w-32" name="postback_method" defaultValue={aff?.postback_method ?? "GET"}>

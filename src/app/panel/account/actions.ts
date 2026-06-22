@@ -22,7 +22,7 @@ export async function updateProfile(
 
   // Met à jour la ligne affilié (RLS : l'affilié n'édite que la sienne).
   const { error: affErr } = await supabase
-    .from("affiliates")
+    .from("affiliate_network")
     .update({ name: trimmedName, email: trimmedEmail || null })
     .eq("auth_user_id", auth.user.id);
   if (affErr) return { error: affErr.message };

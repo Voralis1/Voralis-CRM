@@ -34,20 +34,23 @@ Content-Type: application/json
 | Champ        | Obligatoire | Règle / format |
 |--------------|:-----------:|----------------|
 | `first_name` | ✅ | Prénom — 1 à 120 caractères. |
+| `last_name`  | ✅ | Nom — 1 à 120 caractères. |
 | `phone`      | ✅ | 6 à 20 caractères. Caractères autorisés : chiffres, `+ ( ) . - espace`. |
-| `last_name`  | — | Nom — ≤ 120 caractères. |
-| `product`    | — | Nom du produit concerné par le lead (texte libre) — ≤ 200 caractères. |
+| `address`    | ✅ | Adresse — 1 à 300 caractères. |
+| `city`       | ✅ | Ville — 1 à 120 caractères. |
+| `quantity`   | ✅ | Quantité — entier de 1 à 99. |
+| `affiliate`  | ✅ | Votre identifiant d'affilié (ex. `3379`). 1 à 255 caractères. |
+| `product`    | — | Nom du produit concerné. Utilisez le **nom exact** ci-dessous — ≤ 200 caractères. |
 | `country`    | — | Code pays ISO à 2 lettres (ex. `AO`, `SN`, `FR`…), si vous l'avez. Aucune restriction de liste. |
-| `address`    | — | ≤ 300 caractères. |
-| `city`       | — | ≤ 120 caractères. |
-| `quantity`   | — | Entier 1 à 99 (défaut : 1). |
 | `ip`         | — | IP du prospect (recommandé pour l'antifraude). |
 | `user_agent` | — | User-agent du prospect (recommandé). |
-| `sub1`…`sub5`| — | Vos paramètres de tracking (source, sous-affilié, campagne…). ≤ 255 chacun. |
+| `sub3`…`sub5`| — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
 | `comment`    | — | Note libre (contexte, remarques…) — ≤ 1000 caractères. |
 
-> Seuls **`first_name`** et **`phone`** sont obligatoires. Tout le reste est optionnel.
-> Indiquez le produit concerné dans le champ **`product`**.
+> **Champs obligatoires :** `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`.
+
+**Noms de produits exacts** (à utiliser dans le champ `product` pour le prix automatique) :
+`prostata`, `Potencia`, `perda de peso`, `Diabetica`.
 
 ### Exemple (cURL)
 
@@ -59,11 +62,13 @@ curl -X POST https://www.voralisnatural.com/api/v1/leads \
     "first_name": "Abdoul",
     "last_name": "Karim",
     "phone": "+611579019",
-    "product": "Perte de poids",
+    "address": "Quartier Almamya",
+    "city": "Conakry",
+    "quantity": 1,
+    "product": "perda de peso",
     "country": "GN",
     "ip": "197.149.242.31",
-    "sub1": "facebook",
-    "sub2": "3379",
+    "affiliate": "3379",
     "comment": "Client rappelé le soir"
   }'
 ```
@@ -83,9 +88,12 @@ curl_setopt_array($ch, [
     "first_name" => "Abdoul",
     "last_name"  => "Karim",
     "phone"      => "+611579019",
+    "address"    => "Quartier Almamya",
+    "city"       => "Conakry",
+    "quantity"   => 1,
+    "product"    => "perda de peso",
     "country"    => "GN",
-    "sub1"       => "facebook",
-    "sub2"       => "3379",
+    "affiliate"  => "3379",
   ]),
 ]);
 $response = curl_exec($ch);
@@ -106,9 +114,12 @@ const res = await fetch("https://www.voralisnatural.com/api/v1/leads", {
     first_name: "Abdoul",
     last_name: "Karim",
     phone: "+611579019",
+    address: "Quartier Almamya",
+    city: "Conakry",
+    quantity: 1,
+    product: "perda de peso",
     country: "GN",
-    sub1: "facebook",
-    sub2: "3379",
+    affiliate: "3379",
   }),
 });
 const data = await res.json();
@@ -186,17 +197,18 @@ Content-Type: application/x-www-form-urlencoded
 
 | Champ LeadVertex            | Champ Voralis | Remarque |
 |-----------------------------|---------------|----------|
-| `fio`                       | `first_name` + `last_name` | Découpé au 1er espace. |
-| `phone`                     | `phone`       | Obligatoire. |
+| `fio`                       | `first_name` + `last_name` | **Obligatoire** : prénom **et** nom (découpé au 1er espace). |
+| `phone`                     | `phone`       | **Obligatoire.** |
+| `address`                   | `address`     | **Obligatoire.** |
+| `city`                      | `city`        | **Obligatoire.** |
+| `goods[0][quantity]`        | `quantity`    | **Obligatoire** (entier ≥ 1). |
 | `country`                   | `country`     | Facultatif, mis en majuscules. |
 | `ip`                        | `ip`          | |
-| `externalWebmaster`         | `sub2`        | Identifiant de votre sous-affilié. |
-| `utm_source`                | `sub1`        | |
+| `externalWebmaster`         | `affiliate`   | **Obligatoire** — identifiant de votre affilié. |
 | `utm_campaign`              | `sub3`        | |
 | `utm_medium`                | `sub4`        | |
 | `utm_content`               | `sub5`        | |
 | `domain`, `additional14/15` | `comment`     | Regroupés dans la note. |
-| `goods[0][quantity]`        | `quantity`    | |
 
 Les champs LeadVertex non listés (ex. `goods[0][goodID]`, `price`) sont simplement ignorés —
 vous pouvez les laisser, ils n'ont aucun effet.
@@ -207,6 +219,9 @@ vous pouvez les laisser, ils n'ont aucun effet.
 curl -X POST "https://www.voralisnatural.com/api/webmaster/v2/addOrder?token=vrl_live_VOTRE_TOKEN" \
   -d "fio=Abdoul Karim" \
   --data-urlencode "phone=+611579019" \
+  -d "address=Quartier Almamya" \
+  -d "city=Conakry" \
+  -d "goods[0][quantity]=1" \
   -d "country=GN" \
   -d "ip=197.149.242.31" \
   -d "externalWebmaster=3379"
@@ -230,6 +245,6 @@ En cas d'erreur : `{ "status": "error", "error_code": "...", "message": "..." }`
 ## Résumé express
 
 1. On vous donne **un token**.
-2. Vous faites un `POST /api/v1/leads` avec `Authorization: Bearer <token>` et le JSON du lead (`first_name` + `phone` suffisent).
+2. Vous faites un `POST /api/v1/leads` avec `Authorization: Bearer <token>` et le JSON du lead (obligatoires : `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`).
 3. Un téléphone déjà vu < 30 j est refusé (409).
 4. Vous recevez un `lead_id` ; suivez le statut via l'API ou par postback.

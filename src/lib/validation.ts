@@ -10,7 +10,8 @@ export const leadSchema = z.object({
   // Produit en texte libre (colonne "Produit" du tableau des leads).
   product: z.string().max(200).optional().nullable(),
   first_name: z.string().min(1, "first_name requis").max(120),
-  last_name: z.string().max(120).optional().nullable(),
+  // Nom de famille obligatoire.
+  last_name: z.string().min(1, "last_name requis").max(120),
   phone: z
     .string()
     .min(6, "téléphone trop court")
@@ -24,13 +25,14 @@ export const leadSchema = z.object({
     .transform((c) => c.toUpperCase())
     .optional()
     .nullable(),
-  address: z.string().max(300).optional().nullable(),
-  city: z.string().max(120).optional().nullable(),
-  quantity: z.coerce.number().int().min(1).max(99).default(1),
+  // Adresse, ville et quantité obligatoires.
+  address: z.string().min(1, "address requis").max(300),
+  city: z.string().min(1, "city requis").max(120),
+  quantity: z.coerce.number().int().min(1, "quantity requis").max(99),
   ip: z.string().max(60).optional().nullable(),
   user_agent: z.string().max(400).optional().nullable(),
-  sub1: z.string().max(255).optional().nullable(),
-  sub2: z.string().max(255).optional().nullable(),
+  // Affiliate (sous-affilié) obligatoire.
+  affiliate: z.string().min(1, "affiliate requis").max(255),
   sub3: z.string().max(255).optional().nullable(),
   sub4: z.string().max(255).optional().nullable(),
   sub5: z.string().max(255).optional().nullable(),

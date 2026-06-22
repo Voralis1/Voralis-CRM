@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
   // Top 3 affiliates
   const { data: topAffiliates } = await supabase
     .from("orders")
-    .select("affiliate_id, affiliates(name)")
+    .select("affiliate_id, affiliate_network(name)")
     .order("affiliate_id", { ascending: true });
 
   const affiliateMap = new Map<string, { name: string; count: number }>();
@@ -45,7 +45,7 @@ export default async function AdminDashboard() {
       affiliateMap.get(key)!.count += 1;
     } else {
       affiliateMap.set(key, {
-        name: o.affiliates?.name ?? "Unknown",
+        name: o.affiliate_network?.name ?? "Unknown",
         count: 1,
       });
     }

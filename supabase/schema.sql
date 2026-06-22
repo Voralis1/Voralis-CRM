@@ -107,7 +107,7 @@ create table if not exists orders (
   quantity       int not null default 1,
   ip             text,
   user_agent     text,
-  sub1 text, sub2 text, sub3 text, sub4 text, sub5 text,
+  affiliate text, sub3 text, sub4 text, sub5 text,
   comment        text,
   status         order_status not null default 'new',
   assigned_agent uuid references profiles(id) on delete set null,
