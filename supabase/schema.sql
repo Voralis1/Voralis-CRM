@@ -96,11 +96,12 @@ create table if not exists orders (
   public_id      text unique not null
                  default lpad(nextval('order_seq')::text, 6, '0'),
   affiliate_id   uuid not null references affiliates(id) on delete restrict,
-  offer_id       text not null references offers(id) on delete restrict,
+  offer_id       text references offers(id) on delete restrict,  -- facultatif
+  product        text,                                           -- produit en texte libre
   first_name     text not null,
   last_name      text,
   phone          text not null,
-  country        char(2) not null,
+  country        char(2),                                        -- facultatif
   address        text,
   city           text,
   quantity       int not null default 1,

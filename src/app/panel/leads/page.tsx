@@ -7,8 +7,9 @@ export default async function PanelLeads() {
     .from("orders")
     .select(`
       id,
-      public_id, 
+      public_id,
       offer_id,
+      product,
       offers(product),
       country,
       affiliate_id,

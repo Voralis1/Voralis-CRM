@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { authenticateAffiliate } from "@/lib/api-auth";
 import { leadSchema } from "@/lib/validation";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { nextOrderPublicId } from "@/lib/orderId";
+import { ingestLead } from "@/lib/leads";
 
 export const runtime = "nodejs";
-
-// Fenêtre de déduplication sur le téléphone (jours).
-const DEDUP_WINDOW_DAYS = 30;
 
 export async function POST(req: Request) {
   // 1) Authentification par token affilié
@@ -40,92 +36,17 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  const lead = parsed.data;
-  const db = createAdminClient();
 
-  // 3) Vérifier que l'offre existe et est active
-  const { data: offer } = await db
-    .from("offers")
-    .select("id, country, status")
-    .eq("id", lead.offer_id)
-    .single();
-  if (!offer || offer.status !== "active")
+  // 3) Ingestion (offre + déduplication + insertion), logique partagée
+  const result = await ingestLead(auth.affiliate.id, parsed.data);
+  if (!result.ok)
     return NextResponse.json(
-      { success: false, error_code: "OFFER_NOT_FOUND", message: "Offre inconnue ou inactive" },
-      { status: 403 }
+      { success: false, error_code: result.error_code, message: result.message },
+      { status: result.code }
     );
-  if (offer.country !== lead.country)
-    return NextResponse.json(
-      { success: false, error_code: "COUNTRY_MISMATCH", message: "Pays non couvert par cette offre" },
-      { status: 422 }
-    );
-
-  // 4) Déduplication sur le téléphone
-  const since = new Date(Date.now() - DEDUP_WINDOW_DAYS * 86400_000).toISOString();
-  const { data: dup } = await db
-    .from("orders")
-    .select("public_id")
-    .eq("phone", lead.phone)
-    .neq("status", "trash")
-    .gte("created_at", since)
-    .limit(1)
-    .maybeSingle();
-  if (dup)
-    return NextResponse.json(
-      { success: false, error_code: "DUPLICATE_LEAD", message: `Lead déjà existant (${dup.public_id})` },
-      { status: 409 }
-    );
-
-  // 5) Insertion avec un identifiant public numérique (retry si collision).
-  const baseRow = {
-    affiliate_id: auth.affiliate.id,
-    offer_id: lead.offer_id,
-    first_name: lead.first_name,
-    last_name: lead.last_name ?? null,
-    phone: lead.phone,
-    country: lead.country,
-    address: lead.address ?? null,
-    city: lead.city ?? null,
-    quantity: lead.quantity,
-    ip: lead.ip ?? null,
-    user_agent: lead.user_agent ?? null,
-    sub1: lead.sub1 ?? null, sub2: lead.sub2 ?? null, sub3: lead.sub3 ?? null,
-    sub4: lead.sub4 ?? null, sub5: lead.sub5 ?? null,
-    comment: lead.comment ?? null,
-    status: "new",
-  };
-
-  let created: { id: string; public_id: string; status: string } | null = null;
-  let error: any = null;
-  for (let attempt = 0; attempt < 4 && !created; attempt++) {
-    const publicId = await nextOrderPublicId(db);
-    const res = await db
-      .from("orders")
-      .insert({ ...baseRow, public_id: publicId })
-      .select("id, public_id, status")
-      .single();
-    created = res.data;
-    error = res.error;
-    // 23505 = violation de contrainte d'unicité (public_id pris) -> on réessaie.
-    if (error?.code !== "23505") break;
-  }
-
-  if (error || !created)
-    return NextResponse.json(
-      { success: false, error_code: "SERVER", message: "Échec de création du lead" },
-      { status: 500 }
-    );
-
-  // Historique initial (baseline "new")
-  await db.from("status_history").insert({
-    order_id: created.id,
-    from_status: null,
-    to_status: "new",
-    note: "Lead reçu via API",
-  });
 
   return NextResponse.json(
-    { success: true, lead_id: created.public_id, status: created.status, message: "Lead reçu avec succès" },
+    { success: true, lead_id: result.lead_id, status: result.status, message: "Lead reçu avec succès" },
     { status: 201 }
   );
 }

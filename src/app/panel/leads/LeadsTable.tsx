@@ -62,8 +62,8 @@ export function LeadsTable({ rows }: LeadsTableProps) {
 
         return [
           o.public_id,
-          offers?.product ?? "",
-          o.country,
+          o.product ?? offers?.product ?? "",
+          o.country ?? "",
           affiliates?.name ?? "",
           o.sub2 ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
@@ -624,7 +624,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
               return (
                 <tr key={o.public_id} className="hover:bg-brand-mist/50">
                   <td className="td font-mono text-xs">{o.public_id}</td>
-                  <td className="td">{offers?.product ?? "—"}</td>
+                  <td className="td">{o.product ?? offers?.product ?? "—"}</td>
                   <td className="td">{o.country}</td>
                   <td className="td">{affiliates?.name ?? "—"}</td>
                   <td className="td">{o.sub2 ?? "—"}</td>

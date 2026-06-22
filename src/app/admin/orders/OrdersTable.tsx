@@ -37,7 +37,7 @@ export function OrdersTable({ rows }: OrdersTableProps) {
             return (
               <tr key={o.id} className="align-top hover:bg-brand-mist/40">
                 <td className="td font-mono text-xs">{o.public_id}</td>
-                <td className="td">{offers?.product ?? "—"}</td>
+                <td className="td">{o.product ?? offers?.product ?? "—"}</td>
                 <td className="td">{o.country}</td>
                 <td className="td">{affiliates?.name ?? "—"}</td>
                 <td className="td font-mono text-xs text-slate-500">{o.affiliate_id}</td>

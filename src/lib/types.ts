@@ -69,11 +69,12 @@ export type Order = {
   id: string;
   public_id: string;
   affiliate_id: string;
-  offer_id: string;
+  offer_id: string | null;
+  product: string | null;
   first_name: string;
   last_name: string | null;
   phone: string;
-  country: string;
+  country: string | null;
   address: string | null;
   city: string | null;
   quantity: number;

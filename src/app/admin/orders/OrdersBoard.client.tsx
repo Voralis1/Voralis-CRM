@@ -29,8 +29,8 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
 
     return (
       (!filters.public_id || o.public_id.toLowerCase().includes(filters.public_id.toLowerCase())) &&
-      (!filters.product || (offers?.product || "").toLowerCase().includes(filters.product.toLowerCase())) &&
-      (!filters.country || o.country.toLowerCase().includes(filters.country.toLowerCase())) &&
+      (!filters.product || (o.product || offers?.product || "").toLowerCase().includes(filters.product.toLowerCase())) &&
+      (!filters.country || (o.country || "").toLowerCase().includes(filters.country.toLowerCase())) &&
       (!filters.affiliate_name || (affiliates?.name || "").toLowerCase().includes(filters.affiliate_name.toLowerCase())) &&
       (!filters.status || o.status.toLowerCase().includes(filters.status.toLowerCase())) &&
       (!filters.first_name || fullName.toLowerCase().includes(filters.first_name.toLowerCase())) &&

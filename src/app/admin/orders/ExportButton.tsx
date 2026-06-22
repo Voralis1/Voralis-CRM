@@ -29,8 +29,8 @@ export function ExportButton({ rows }: ExportButtonProps) {
 
         return [
           o.public_id,
-          offers?.product ?? "",
-          o.country,
+          o.product ?? offers?.product ?? "",
+          o.country ?? "",
           affiliates?.name ?? "",
           o.affiliate_id,
           new Date(o.created_at).toLocaleString("fr-FR"),

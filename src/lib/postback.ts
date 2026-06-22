@@ -85,8 +85,10 @@ export async function dispatchPending(limit = 25): Promise<{
       continue;
     }
 
-    const { data: offer } = await db
-      .from("offers").select("*").eq("id", order.offer_id).single();
+    // offer_id est optionnel : un lead peut ne pas être rattaché à une offre.
+    const { data: offer } = order.offer_id
+      ? await db.from("offers").select("*").eq("id", order.offer_id).single()
+      : { data: null };
 
     const vars = buildVars(order, offer);
     const method = (pb.method || aff.postback_method || "GET").toUpperCase();
