@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SignOut from "@/components/SignOut";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 type NavItem = { href: string; label: string };
 
@@ -44,8 +45,9 @@ export default function Shell({
       </aside>
 
       <main className="flex flex-1 flex-col overflow-hidden bg-[#fbfcfb]">
-        <header className="shrink-0 border-b border-brand-line bg-white px-8 py-4">
+        <header className="shrink-0 border-b border-brand-line bg-white px-8 py-4 flex items-center justify-between gap-4">
           <h1 className="text-lg font-semibold text-brand-dark">{title}</h1>
+          <LanguageSwitcher />
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-8">{children}</div>
       </main>

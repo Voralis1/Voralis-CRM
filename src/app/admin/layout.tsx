@@ -1,24 +1,26 @@
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import Shell from "@/components/Shell";
+import { getServerT } from "@/i18n/server";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const profile = await getProfile();
   if (!profile) redirect("/login");
   if (profile.role !== "admin" && profile.role !== "agent") redirect("/panel");
 
+  const t = getServerT();
   const nav = [
-    { href: "/admin/dashboard", label: "Tableau de bord" },
-    { href: "/admin/orders", label: "Traitement des leads" },
-    { href: "/admin/bulk-update", label: "Mise à jour" },
-    { href: "/admin/products", label: "Gestion de produits" },
-    { href: "/admin/affiliates", label: "Affiliate network & affiliates" },
-    { href: "/admin/statuses", label: "Gestion des status" },
-    { href: "/admin/statistics", label: "Statistiques" },
+    { href: "/admin/dashboard", label: t("nav.dashboard") },
+    { href: "/admin/orders", label: t("nav.orders") },
+    { href: "/admin/bulk-update", label: t("nav.bulkUpdate") },
+    { href: "/admin/products", label: t("nav.products") },
+    { href: "/admin/affiliates", label: t("nav.affiliates") },
+    { href: "/admin/statuses", label: t("nav.statuses") },
+    { href: "/admin/statistics", label: t("nav.statistics") },
   ];
 
   return (
-    <Shell title="Back-office VORALIS" user={{ email: profile.email, role: profile.role }} nav={nav}>
+    <Shell title={t("layout.adminTitle")} user={{ email: profile.email, role: profile.role }} nav={nav}>
       {children}
     </Shell>
   );

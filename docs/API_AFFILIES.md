@@ -40,14 +40,14 @@ Content-Type: application/json
 | `city`       | ✅ | Ville — 1 à 120 caractères. |
 | `quantity`   | ✅ | Quantité — entier de 1 à 99. |
 | `affiliate`  | ✅ | Votre identifiant d'affilié (ex. `3379`). 1 à 255 caractères. |
-| `product`    | — | Nom du produit concerné. Utilisez le **nom exact** ci-dessous — ≤ 200 caractères. |
-| `country`    | — | Code pays ISO à 2 lettres (ex. `AO`, `SN`, `FR`…), si vous l'avez. Aucune restriction de liste. |
+| `product`    | ✅ | Nom du produit concerné. Utilisez le **nom exact** ci-dessous — ≤ 200 caractères. |
+| `country`    | ✅ | Code pays ISO à 2 lettres (ex. `AO`, `SN`, `FR`…). |
 | `ip`         | — | IP du prospect (recommandé pour l'antifraude). |
 | `user_agent` | — | User-agent du prospect (recommandé). |
 | `sub3`…`sub5`| — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
 | `comment`    | — | Note libre (contexte, remarques…) — ≤ 1000 caractères. |
 
-> **Champs obligatoires :** `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`.
+> **Champs obligatoires :** `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`, `product`, `country`.
 
 **Noms de produits exacts** (à utiliser dans le champ `product` pour le prix automatique) :
 `prostata`, `Potencia`, `perda de peso`, `Diabetica`.
@@ -200,7 +200,8 @@ Content-Type: application/x-www-form-urlencoded
 | `address`                   | `address`     | **Obligatoire.** |
 | `city`                      | `city`        | **Obligatoire.** |
 | `goods[0][quantity]`        | `quantity`    | **Obligatoire** (entier ≥ 1). |
-| `country`                   | `country`     | Facultatif, mis en majuscules. |
+| `country`                   | `country`     | **Obligatoire** — code ISO 2 lettres (mis en majuscules). |
+| `product`                   | `product`     | **Obligatoire** — nom exact du produit. |
 | `ip`                        | `ip`          | |
 | `externalWebmaster`         | `affiliate`   | **Obligatoire** — identifiant de votre affilié. |
 | `utm_campaign`              | `sub3`        | |
@@ -221,6 +222,7 @@ curl -X POST "https://www.voralisnatural.com/api/webmaster/v2/addOrder?token=vrl
   -d "city=Conakry" \
   -d "goods[0][quantity]=1" \
   -d "country=GN" \
+  -d "product=perda de peso" \
   -d "ip=197.149.242.31" \
   -d "externalWebmaster=3379"
 ```
