@@ -56,20 +56,18 @@ Content-Type: application/json
 
 ```bash
 curl -X POST https://www.voralisnatural.com/api/v1/leads \
-  -H "Authorization: Bearer vrl_live_VOTRE_TOKEN" \
+  -H "Authorization: Bearer vrl_live_c473641f3c7b7631dc4b23f87b05bd13d2b8ba4805f57022" \
   -H "Content-Type: application/json" \
   -d '{
-    "first_name": "Abdoul",
-    "last_name": "Karim",
-    "phone": "+611579019",
-    "address": "Quartier Almamya",
-    "city": "Conakry",
-    "quantity": 1,
-    "product": "perda de peso",
-    "country": "GN",
-    "ip": "197.149.242.31",
-    "affiliate": "3379",
-    "comment": "Client rappelé le soir"
+    "first_name":"Abdoul",
+    "last_name":"Karim",
+    "phone":"+611573050",
+    "address":"Quartier Almamya",
+    "city":"Conakry",
+    "quantity":1,
+    "affiliate":"3379",
+    "product":"perda de peso",
+    "country":"GN"
   }'
 ```
 
