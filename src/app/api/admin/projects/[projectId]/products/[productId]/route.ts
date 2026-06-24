@@ -9,10 +9,13 @@ export async function PUT(
 ) {
   const { projectId, productId } = params;
   const body = await req.json();
-  const { createdAt, name, description, price, measure, country, quantity } = body;
+  const {
+    name, price, category, country,
+    dailyCapacity, payout, status, workingHours, additionalInfo,
+  } = body;
 
-  if (!createdAt || !name || !price || !quantity) {
-    return NextResponse.json({ error: "Tous les champs obligatoires doivent être remplis." }, { status: 400 });
+  if (!name || price === undefined || price === "") {
+    return NextResponse.json({ error: "Les champs nom et prix sont obligatoires." }, { status: 400 });
   }
 
   const db = createAdminClient();
@@ -20,13 +23,15 @@ export async function PUT(
   const { error } = await db
     .from("project_products")
     .update({
-      created_at: createdAt,
       name,
-      description: description || null,
+      description: additionalInfo || null, // informations supplémentaires
       price: Number(price),
-      measure: measure || null,
       country: country || null,
-      quantity: Number(quantity),
+      category: category || null,
+      daily_capacity: Number(dailyCapacity) || 0,
+      payout: Number(payout) || 0,
+      status: status || "active",
+      working_hours: workingHours || null,
     })
     .eq("id", productId)
     .eq("project_id", projectId);

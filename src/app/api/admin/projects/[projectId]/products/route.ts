@@ -9,10 +9,13 @@ export async function POST(
 ) {
   const projectId = params.projectId;
   const body = await req.json();
-  const { id, createdAt, name, description, price, measure, country, quantity } = body;
+  const {
+    id, name, price, category, country,
+    dailyCapacity, payout, status, workingHours, additionalInfo, createdAt,
+  } = body;
 
-  if (!id || !createdAt || !name || !price || !quantity) {
-    return NextResponse.json({ error: "Tous les champs obligatoires doivent être remplis." }, { status: 400 });
+  if (!id || !name || price === undefined || price === "") {
+    return NextResponse.json({ error: "Les champs id, nom et prix sont obligatoires." }, { status: 400 });
   }
 
   const db = createAdminClient();
@@ -25,13 +28,16 @@ export async function POST(
   const { error } = await db.from("project_products").insert({
     id,
     project_id: projectId,
-    created_at: createdAt,
+    created_at: createdAt || new Date().toISOString().slice(0, 10),
     name,
-    description: description || null,
+    description: additionalInfo || null, // informations supplémentaires
     price: Number(price),
-    measure: measure || null,
     country: country || null,
-    quantity: Number(quantity),
+    category: category || null,
+    daily_capacity: Number(dailyCapacity) || 0,
+    payout: Number(payout) || 0,
+    status: status || "active",
+    working_hours: workingHours || null,
   });
 
   if (error) {

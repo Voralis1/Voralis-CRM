@@ -13,11 +13,17 @@ create table if not exists project_products (
   project_id text not null references projects(id) on delete cascade,
   created_at date not null default current_date,
   name text not null,
-  description text,
+  description text,                                  -- informations supplémentaires
   price numeric(12,2) not null default 0,
   measure text,
   country text,
-  quantity int not null default 0
+  quantity int not null default 0,
+  category text,
+  daily_capacity int not null default 0,            -- capacité journalière
+  confirmation_rate numeric(5,2) not null default 0,-- taux de confirmation (%)
+  payout numeric(12,2) not null default 0,
+  status text not null default 'active',
+  working_hours text                                -- horaires de travail
 );
 
 alter table projects enable row level security;

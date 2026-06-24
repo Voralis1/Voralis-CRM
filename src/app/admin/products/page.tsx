@@ -51,6 +51,20 @@ export default function ProductsAdminPage() {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
+  const handleDeleteProject = async (projectId: string) => {
+    if (!confirm("Supprimer ce projet et tous ses produits ? Cette action est irréversible.")) return;
+    try {
+      const response = await fetch(`/api/admin/projects/${encodeURIComponent(projectId)}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Erreur lors de la suppression.");
+      setProjects((current) => current.filter((p) => p.id !== projectId));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   const handleCreate = async () => {
     if (!canSubmit) return;
     setIsSaving(true);
@@ -223,7 +237,19 @@ export default function ProductsAdminPage() {
                   <td className="td">{new Date(project.expiresAt).toLocaleDateString("fr-FR")}</td>
                   <td className="td">{project.productCount}</td>
                   <td className="td">
-                    <span className="text-sm text-brand-600 hover:underline">Voir le projet</span>
+                    <div className="flex gap-3">
+                      <span className="text-sm text-brand-600 hover:underline">Voir le projet</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteProject(project.id);
+                        }}
+                        className="text-sm text-red-600 hover:underline"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

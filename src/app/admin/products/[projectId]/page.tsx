@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 
 interface Product {
   id: string;
-  createdAt: string;
   name: string;
-  description: string;
-  price: string;
-  measure: string;
+  category: string;
   country: string;
-  quantity: string;
+  price: string;
+  dailyCapacity: string;
+  confirmationRate: string;
+  payout: string;
+  status: string;
+  workingHours: string;
+  additionalInfo: string;
 }
 
 interface Project {
@@ -30,13 +33,16 @@ interface ProjectPageProps {
 
 const initialProductForm: Product = {
   id: "",
-  createdAt: new Date().toISOString().slice(0, 10),
   name: "",
-  description: "",
-  price: "",
-  measure: "",
+  category: "",
   country: "",
-  quantity: "",
+  price: "",
+  dailyCapacity: "",
+  confirmationRate: "",
+  payout: "",
+  status: "active",
+  workingHours: "",
+  additionalInfo: "",
 };
 
 export default function ProjectDetailsPage({ params }: ProjectPageProps) {
@@ -67,7 +73,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
   }, [projectId]);
 
   const canAdd = useMemo(
-    () => form.id.trim() !== "" && form.name.trim() !== "" && form.price.trim() !== "" && form.quantity.trim() !== "",
+    () => form.id.trim() !== "" && form.name.trim() !== "" && form.price.trim() !== "",
     [form]
   );
 
@@ -99,18 +105,17 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
       alert("Aucun produit à télécharger.");
       return;
     }
-    const headers = ["ID", "Date création", "Nom", "Description", "Prix", "Mesure", "Pays", "Quantité"];
+    const headers = [
+      "ID produit", "Nom du produit", "Catégorie", "Pays", "Prix",
+      "Capacité journalière", "Taux de confirmation", "Payout", "Status",
+      "Horaires de travail", "Informations supplémentaires",
+    ];
     const rows = products.map((p) => [
-      p.id,
-      new Date(p.createdAt).toLocaleDateString("fr-FR"),
-      p.name,
-      p.description,
-      p.price,
-      p.measure,
-      p.country,
-      p.quantity,
+      p.id, p.name, p.category, p.country, p.price,
+      p.dailyCapacity, p.confirmationRate, p.payout, p.status,
+      p.workingHours, p.additionalInfo,
     ]);
-    const csv = [headers, ...rows].map((row) => row.map((val) => `"${val}"`).join(",")).join("\n");
+    const csv = [headers, ...rows].map((row) => row.map((val) => `"${val ?? ""}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -141,13 +146,15 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: form.id,
-          createdAt: form.createdAt,
           name: form.name,
-          description: form.description,
-          price: form.price,
-          measure: form.measure,
+          category: form.category,
           country: form.country,
-          quantity: form.quantity,
+          price: form.price,
+          dailyCapacity: form.dailyCapacity,
+          payout: form.payout,
+          status: form.status,
+          workingHours: form.workingHours,
+          additionalInfo: form.additionalInfo,
         }),
       });
 
@@ -216,7 +223,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
+          <div className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
@@ -232,36 +239,48 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 text-sm">
-                  <span>ID du produit</span>
+                  <span>ID produit</span>
                   <input type="text" value={form.id} onChange={(e) => handleChange("id", e.target.value)} disabled={!!editingProductId} className="input w-full disabled:bg-slate-100" placeholder="prod_001" />
                 </label>
                 <label className="space-y-2 text-sm">
-                  <span>Date de création</span>
-                  <input type="date" value={form.createdAt} onChange={(e) => handleChange("createdAt", e.target.value)} className="input w-full" />
-                </label>
-                <label className="space-y-2 text-sm">
-                  <span>Nom</span>
+                  <span>Nom du produit</span>
                   <input type="text" value={form.name} onChange={(e) => handleChange("name", e.target.value)} className="input w-full" placeholder="Pilule minceur" />
                 </label>
                 <label className="space-y-2 text-sm">
-                  <span>Description</span>
-                  <input type="text" value={form.description} onChange={(e) => handleChange("description", e.target.value)} className="input w-full" placeholder="Description du produit" />
-                </label>
-                <label className="space-y-2 text-sm">
-                  <span>Prix</span>
-                  <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => handleChange("price", e.target.value)} className="input w-full" placeholder="100" />
-                </label>
-                <label className="space-y-2 text-sm">
-                  <span>Moyen de mesure</span>
-                  <input type="text" value={form.measure} onChange={(e) => handleChange("measure", e.target.value)} className="input w-full" placeholder="mg / unité" />
+                  <span>Catégorie</span>
+                  <input type="text" value={form.category} onChange={(e) => handleChange("category", e.target.value)} className="input w-full" placeholder="Minceur" />
                 </label>
                 <label className="space-y-2 text-sm">
                   <span>Pays</span>
                   <input type="text" value={form.country} onChange={(e) => handleChange("country", e.target.value)} className="input w-full" placeholder="SN" />
                 </label>
                 <label className="space-y-2 text-sm">
-                  <span>Quantité</span>
-                  <input type="number" min="0" value={form.quantity} onChange={(e) => handleChange("quantity", e.target.value)} className="input w-full" placeholder="10" />
+                  <span>Prix</span>
+                  <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => handleChange("price", e.target.value)} className="input w-full" placeholder="100" />
+                </label>
+                <label className="space-y-2 text-sm">
+                  <span>Capacité journalière</span>
+                  <input type="number" min="0" value={form.dailyCapacity} onChange={(e) => handleChange("dailyCapacity", e.target.value)} className="input w-full" placeholder="50" />
+                </label>
+                <label className="space-y-2 text-sm">
+                  <span>Payout</span>
+                  <input type="number" min="0" step="0.01" value={form.payout} onChange={(e) => handleChange("payout", e.target.value)} className="input w-full" placeholder="6" />
+                </label>
+                <label className="space-y-2 text-sm">
+                  <span>Status</span>
+                  <select value={form.status} onChange={(e) => handleChange("status", e.target.value)} className="input w-full">
+                    <option value="active">Actif</option>
+                    <option value="paused">En pause</option>
+                    <option value="archived">Archivé</option>
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm">
+                  <span>Horaires de travail</span>
+                  <input type="text" value={form.workingHours} onChange={(e) => handleChange("workingHours", e.target.value)} className="input w-full" placeholder="9h - 18h" />
+                </label>
+                <label className="space-y-2 text-sm sm:col-span-2">
+                  <span>Informations supplémentaires</span>
+                  <input type="text" value={form.additionalInfo} onChange={(e) => handleChange("additionalInfo", e.target.value)} className="input w-full" placeholder="Notes, contraintes…" />
                 </label>
               </div>
 
@@ -281,24 +300,27 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
       )}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[1000px]">
+        <table className="w-full min-w-[1400px]">
           <thead className="bg-brand-mist">
             <tr>
-              <th className="th">ID du produit</th>
-              <th className="th">Date de création</th>
-              <th className="th">Nom</th>
-              <th className="th">Description</th>
-              <th className="th">Prix</th>
-              <th className="th">Moyen de mesure</th>
+              <th className="th">ID produit</th>
+              <th className="th">Nom du produit</th>
+              <th className="th">Catégorie</th>
               <th className="th">Pays</th>
-              <th className="th">Quantité</th>
+              <th className="th">Prix</th>
+              <th className="th">Capacité journalière</th>
+              <th className="th">Taux de confirmation</th>
+              <th className="th">Payout</th>
+              <th className="th">Status</th>
+              <th className="th">Horaires de travail</th>
+              <th className="th">Informations supplémentaires</th>
               <th className="th">Actions</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td className="td text-center text-slate-500" colSpan={9}>
+                <td className="td text-center text-slate-500" colSpan={12}>
                   Aucun produit ajouté pour ce projet.
                 </td>
               </tr>
@@ -306,13 +328,26 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
               products.map((product) => (
                 <tr key={product.id} className="hover:bg-brand-mist/40">
                   <td className="td font-mono text-xs">{product.id}</td>
-                  <td className="td">{new Date(product.createdAt).toLocaleDateString("fr-FR")}</td>
                   <td className="td">{product.name}</td>
-                  <td className="td">{product.description || "—"}</td>
-                  <td className="td">{product.price ? `${Number(product.price).toFixed(2)}€` : "—"}</td>
-                  <td className="td">{product.measure || "—"}</td>
+                  <td className="td">{product.category || "—"}</td>
                   <td className="td">{product.country || "—"}</td>
-                  <td className="td">{product.quantity}</td>
+                  <td className="td">{product.price ? `${Number(product.price).toFixed(2)}€` : "—"}</td>
+                  <td className="td">{product.dailyCapacity || "—"}</td>
+                  <td className="td">{product.confirmationRate ? `${product.confirmationRate}%` : "—"}</td>
+                  <td className="td">{product.payout ? `${Number(product.payout).toFixed(2)}€` : "—"}</td>
+                  <td className="td">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      product.status === "active"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : product.status === "paused"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-slate-100 text-slate-600"
+                    }`}>
+                      {product.status || "—"}
+                    </span>
+                  </td>
+                  <td className="td">{product.workingHours || "—"}</td>
+                  <td className="td text-sm">{product.additionalInfo || "—"}</td>
                   <td className="td">
                     <div className="flex gap-2">
                       <button
