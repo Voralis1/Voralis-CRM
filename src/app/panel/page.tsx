@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getMyNetworkId } from "@/lib/auth";
 import type { OrderStatus } from "@/lib/types";
 
 function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
@@ -13,10 +14,14 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
 
 export default async function PanelDashboard() {
   const supabase = createClient();
-  // RLS limite déjà aux leads de l'affilié connecté.
-  const { data: orders } = await supabase
-    .from("orders")
-    .select("status, payout_amount, payout_currency");
+  // Isolation : un affilié ne voit QUE ses propres leads (+ RLS en filet).
+  const networkId = await getMyNetworkId();
+  const { data: orders } = networkId
+    ? await supabase
+        .from("orders")
+        .select("status, payout_amount, payout_currency")
+        .eq("affiliate_id", networkId)
+    : { data: [] };
 
   const rows = orders ?? [];
   const count = (s: OrderStatus) => rows.filter((r) => r.status === s).length;

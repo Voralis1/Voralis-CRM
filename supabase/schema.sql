@@ -207,7 +207,7 @@ $$;
 
 create or replace function my_affiliate_id()
 returns uuid language sql stable security definer set search_path = public as $$
-  select id from affiliates where auth_user_id = auth.uid()
+  select id from affiliate_network where auth_user_id = auth.uid()
 $$;
 
 -- profiles : chacun voit/édite son profil ; admin voit tout

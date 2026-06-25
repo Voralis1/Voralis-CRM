@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { confirmationRateFor } from "@/lib/confirmationRate";
 
 export const runtime = "nodejs";
 
@@ -33,22 +34,8 @@ export async function GET(
   }
 
   // Taux de confirmation calculé automatiquement depuis les leads (orders).
-  // confirmés = statut confirmé ou au-delà ; valides = hors duplicate/trash.
-  const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered", "returned", "cancelled"]);
-  const EXCLUDED = new Set(["duplicate", "trash"]);
   const { data: orders } = await db.from("orders").select("status, offer_id, product");
-  const allOrders = orders ?? [];
-
-  const norm = (v: any) => String(v ?? "").trim().toLowerCase();
-  function confirmationRate(product: any): number {
-    const pName = norm(product.name);
-    const related = allOrders.filter(
-      (o: any) => o.offer_id === product.id || (o.product && norm(o.product) === pName)
-    );
-    const valid = related.filter((o: any) => !EXCLUDED.has(o.status)).length;
-    const confirmed = related.filter((o: any) => CONFIRMED.has(o.status)).length;
-    return valid > 0 ? Math.round((confirmed / valid) * 1000) / 10 : 0; // 1 décimale
-  }
+  const allOrders = (orders ?? []) as any[];
 
   return NextResponse.json({
     project: {
@@ -65,7 +52,7 @@ export async function GET(
       country: product.country ?? "",
       price: product.price != null ? String(product.price) : "",
       dailyCapacity: String(product.daily_capacity ?? 0),
-      confirmationRate: String(confirmationRate(product)), // calculé, non saisi
+      confirmationRate: String(confirmationRateFor(product, allOrders)), // calculé, non saisi
       payout: product.payout != null ? String(product.payout) : "",
       status: product.status ?? "active",
       workingHours: product.working_hours ?? "",

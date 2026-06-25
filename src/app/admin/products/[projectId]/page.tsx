@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatProductPrice, formatPayout, currencyLabelForCountry } from "@/lib/currency";
 
 interface Product {
   id: string;
@@ -255,7 +256,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
                   <input type="text" value={form.country} onChange={(e) => handleChange("country", e.target.value)} className="input w-full" placeholder="SN" />
                 </label>
                 <label className="space-y-2 text-sm">
-                  <span>Prix</span>
+                  <span>Prix{currencyLabelForCountry(form.country) ? ` (${currencyLabelForCountry(form.country)})` : " (devise du pays)"}</span>
                   <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => handleChange("price", e.target.value)} className="input w-full" placeholder="100" />
                 </label>
                 <label className="space-y-2 text-sm">
@@ -263,7 +264,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
                   <input type="number" min="0" value={form.dailyCapacity} onChange={(e) => handleChange("dailyCapacity", e.target.value)} className="input w-full" placeholder="50" />
                 </label>
                 <label className="space-y-2 text-sm">
-                  <span>Payout</span>
+                  <span>Payout ($)</span>
                   <input type="number" min="0" step="0.01" value={form.payout} onChange={(e) => handleChange("payout", e.target.value)} className="input w-full" placeholder="6" />
                 </label>
                 <label className="space-y-2 text-sm">
@@ -310,7 +311,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
               <th className="th">Prix</th>
               <th className="th">Capacité journalière</th>
               <th className="th">Taux de confirmation</th>
-              <th className="th">Payout</th>
+              <th className="th">Payout ($)</th>
               <th className="th">Status</th>
               <th className="th">Horaires de travail</th>
               <th className="th">Informations supplémentaires</th>
@@ -331,10 +332,10 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
                   <td className="td">{product.name}</td>
                   <td className="td">{product.category || "—"}</td>
                   <td className="td">{product.country || "—"}</td>
-                  <td className="td">{product.price ? `${Number(product.price).toFixed(2)}€` : "—"}</td>
+                  <td className="td">{product.price ? formatProductPrice(product.price, product.country) : "—"}</td>
                   <td className="td">{product.dailyCapacity || "—"}</td>
                   <td className="td">{product.confirmationRate ? `${product.confirmationRate}%` : "—"}</td>
-                  <td className="td">{product.payout ? `${Number(product.payout).toFixed(2)}€` : "—"}</td>
+                  <td className="td">{product.payout ? formatPayout(product.payout) : "—"}</td>
                   <td className="td">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       product.status === "active"

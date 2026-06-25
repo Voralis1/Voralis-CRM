@@ -19,3 +19,17 @@ export async function getProfile() {
     .single();
   return profile ? { ...profile, email: auth.user.email } : null;
 }
+
+// Id du réseau affilié (affiliate_network) lié au compte connecté, ou null.
+// Sert à isoler les données d'un affilié (il ne voit que les siennes).
+export async function getMyNetworkId(): Promise<string | null> {
+  const supabase = createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return null;
+  const { data } = await supabase
+    .from("affiliate_network")
+    .select("id")
+    .eq("auth_user_id", auth.user.id)
+    .maybeSingle();
+  return data?.id ?? null;
+}

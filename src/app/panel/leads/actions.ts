@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { nextOrderPublicId } from "@/lib/orderId";
+import { getMyNetworkId } from "@/lib/auth";
 
 // Garantit qu'une offre existe pour un produit du catalogue (cible de la FK
 // orders.offer_id) et renvoie l'offer_id. Crée l'offre si nécessaire.
@@ -51,7 +52,9 @@ export async function updateOrder(orderId: string, data: {
   affiliate?: string;   // sous-affilié -> colonne `affiliate`
   product_id?: string;  // change de produit (re-provisionne l'offre)
 }) {
-  // Service-role : la RLS réserve l'UPDATE d'orders au staff (admin/agent).
+  // Isolation : l'affilié ne peut éditer QUE ses propres leads.
+  const networkId = await getMyNetworkId();
+  if (!networkId) throw new Error("Non autorisé.");
   const db = createAdminClient();
 
   const patch: Record<string, any> = {};
@@ -66,7 +69,7 @@ export async function updateOrder(orderId: string, data: {
   if (data.affiliate !== undefined) patch.affiliate = data.affiliate?.trim() || null;
   if (data.product_id) patch.offer_id = await ensureOfferForProduct(db, data.product_id);
 
-  const { error } = await db.from("orders").update(patch).eq("id", orderId);
+  const { error } = await db.from("orders").update(patch).eq("id", orderId).eq("affiliate_id", networkId);
 
   if (error) {
     throw new Error(`Erreur de mise à jour: ${error.message}`);
@@ -76,10 +79,12 @@ export async function updateOrder(orderId: string, data: {
 }
 
 export async function deleteOrder(orderId: string) {
-  // Service-role : la table orders n'a pas de politique de suppression pour
-  // les affiliés. Les status_history/postbacks liés sont supprimés en cascade.
+  // Isolation : l'affilié ne peut supprimer QUE ses propres leads.
+  const networkId = await getMyNetworkId();
+  if (!networkId) throw new Error("Non autorisé.");
+  // Les status_history/postbacks liés sont supprimés en cascade.
   const db = createAdminClient();
-  const { error } = await db.from("orders").delete().eq("id", orderId);
+  const { error } = await db.from("orders").delete().eq("id", orderId).eq("affiliate_id", networkId);
 
   if (error) {
     throw new Error(`Erreur de suppression: ${error.message}`);
