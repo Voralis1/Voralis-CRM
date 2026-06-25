@@ -19,18 +19,34 @@ export default async function PanelDashboard() {
   const { data: orders } = networkId
     ? await supabase
         .from("orders")
-        .select("status, payout_amount, payout_currency")
+        .select("status, product, offer_id")
         .eq("affiliate_id", networkId)
     : { data: [] };
 
-  const rows = orders ?? [];
+  const rows = (orders ?? []) as any[];
   const count = (s: OrderStatus) => rows.filter((r) => r.status === s).length;
   const total = rows.length;
-  const confirmed = count("confirmed") + count("shipped") + count("in_delivery") + count("delivered");
+  const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered"]);
+  const confirmed = rows.filter((r) => CONFIRMED.has(r.status)).length;
   const delivered = count("delivered");
-  const validated = rows
-    .filter((r) => r.payout_amount != null)
-    .reduce((s, r) => s + Number(r.payout_amount), 0);
+
+  // Payout total = somme du payout (commission $) des leads confirmés.
+  // Le payout vient du produit (project_products.payout), résolu par
+  // offer_id (lead manuel) ou par nom de produit (lead API).
+  const { data: prods } = await supabase.from("project_products").select("id, name, payout");
+  const payoutById = new Map<string, number>();
+  const payoutByName = new Map<string, number>();
+  for (const p of prods ?? []) {
+    payoutById.set(p.id, Number(p.payout ?? 0));
+    payoutByName.set(String(p.name ?? "").trim().toLowerCase(), Number(p.payout ?? 0));
+  }
+  const leadPayout = (o: any): number => {
+    if (o.offer_id && payoutById.has(o.offer_id)) return payoutById.get(o.offer_id)!;
+    return payoutByName.get(String(o.product ?? "").trim().toLowerCase()) ?? 0;
+  };
+  const payoutTotal = rows
+    .filter((r) => CONFIRMED.has(r.status))
+    .reduce((s, r) => s + leadPayout(r), 0);
 
   const cancelled = count("cancelled") + count("rejected");
 
@@ -45,7 +61,7 @@ export default async function PanelDashboard() {
         <Kpi label="Taux de confirmation" value={`${confRate}%`} sub={`${confirmed} confirmés`} />
         <Kpi label="Taux d'annulation" value={`${cancRate}%`} sub={`${cancelled} annulés`} />
         <Kpi label="Taux de livraison" value={`${delivRate}%`} sub={`${delivered} livrés`} />
-        <Kpi label="Commissions validées" value={`$${validated.toFixed(2)}`} sub="statuts facturables" />
+        <Kpi label="Payout total" value={`$${payoutTotal.toFixed(2)}`} sub={`${confirmed} leads confirmés`} />
       </div>
 
       <div className="card p-6 text-sm text-slate-600">
