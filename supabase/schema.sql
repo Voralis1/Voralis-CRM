@@ -101,7 +101,7 @@ create table if not exists orders (
   first_name     text not null,
   last_name      text,
   phone          text not null,
-  country        char(2),                                        -- facultatif
+  country        text,                                           -- abréviation 2-3 lettres
   address        text,
   city           text,
   quantity       int not null default 1,

@@ -40,8 +40,8 @@ Content-Type: application/json
 | `city`       | ✅ | Ville — 1 à 120 caractères. |
 | `quantity`   | ✅ | Quantité — entier de 1 à 99. |
 | `affiliate`  | ✅ | Votre identifiant d'affilié (ex. `3379`). 1 à 255 caractères. |
-| `product`    | ✅ | Nom du produit concerné. Utilisez le **nom exact** ci-dessous — ≤ 200 caractères. |
-| `country`    | ✅ | Code pays ISO à 2 lettres (ex. `AO`, `SN`, `FR`…). |
+| `product`    | ✅ | **ID du produit (recommandé)** ou son nom exact. L'ID est plus fiable — récupérez-le dans le catalogue (téléchargeable en JSON depuis votre espace). |
+| `country`    | ✅ | Abréviation pays **2 à 3 lettres** : `SN, CI, BZV, ML, GN, AGO, GAB, BF, NG, TG`. |
 | `ip`         | — | IP du prospect (recommandé pour l'antifraude). |
 | `user_agent` | — | User-agent du prospect (recommandé). |
 | `sub3`…`sub5`| — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
@@ -49,8 +49,10 @@ Content-Type: application/json
 
 > **Champs obligatoires :** `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`, `product`, `country`.
 
-**Noms de produits exacts** (à utiliser dans le champ `product` pour le prix automatique) :
-`prostata`, `Potencia`, `perda de peso`, `Diabetica`.
+**Produits** : récupérez la liste (ID + nom + pays + payout) depuis votre espace
+(bouton **Télécharger JSON** sur la page Produits). Mettez de préférence l'**ID** du
+produit dans le champ `product` — c'est exact et insensible aux fautes de recopie.
+Le nom exact reste accepté (insensible à la casse).
 
 ### Exemple (cURL)
 

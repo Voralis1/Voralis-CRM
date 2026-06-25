@@ -3,6 +3,7 @@
 import { STATUS_META, type OrderStatus, ALL_STATUSES } from "@/lib/types";
 import { useState } from "react";
 import { updateOrder, createOrder, deleteOrder, fetchProducts } from "./actions";
+import { formatProductPrice } from "@/lib/currency";
 
 interface LeadsTableProps {
   rows: any[];
@@ -66,7 +67,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           o.affiliate ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
           meta?.label ?? o.status,
-          o.payout_amount != null ? Number(o.payout_amount).toFixed(2) : "",
+          o.payout_amount != null ? formatProductPrice(o.payout_amount, o.country) : "",
           fullName,
           o.phone,
           o.address ?? "",
@@ -631,7 +632,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                   </td>
                   <td className="td">
                     {o.payout_amount != null
-                      ? `$${Number(o.payout_amount).toFixed(2)}`
+                      ? formatProductPrice(o.payout_amount, o.country)
                       : "—"}
                   </td>
                   <td className="td">{fullName}</td>

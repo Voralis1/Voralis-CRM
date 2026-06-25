@@ -17,11 +17,10 @@ export const leadSchema = z.object({
     .min(6, "téléphone trop court")
     .max(20)
     .regex(/^[+0-9\s().-]+$/, "format téléphone invalide"),
-  // Pays obligatoire : code ISO à 2 lettres, sans restriction de liste.
+  // Pays obligatoire : abréviation de 2 à 3 lettres (ex. SN, GN, AGO, GAB, BZV).
   country: z
     .string()
-    .length(2, "code pays sur 2 lettres")
-    .regex(/^[A-Za-z]{2}$/, "code pays invalide")
+    .regex(/^[A-Za-z]{2,3}$/, "code pays (2 à 3 lettres)")
     .transform((c) => c.toUpperCase()),
   // Adresse, ville et quantité obligatoires.
   address: z.string().min(1, "address requis").max(300),

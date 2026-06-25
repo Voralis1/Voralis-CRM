@@ -47,6 +47,7 @@ export default async function PanelProductsPage() {
   ];
   // Catalogue JSON prêt pour l'intégration API / CRM de l'affilié.
   const jsonData = products.map((p) => ({
+    id: p.id,
     name: p.name,
     category: p.category ?? null,
     country: p.country ?? null,

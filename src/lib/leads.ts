@@ -43,21 +43,29 @@ export async function ingestLead(
   if (dup)
     return { ok: false, code: 409, error_code: "DUPLICATE_LEAD", message: `Lead déjà existant (${dup.public_id})` };
 
-  // 3a) Prix : récupéré depuis le catalogue (project_products) par nom de produit
-  //     (correspondance exacte, insensible à la casse). Pas de produit ou pas de
-  //     correspondance -> prix laissé vide (saisie manuelle possible ensuite).
+  // 3a) Produit : l'affilié peut envoyer l'ID du produit (recommandé, plus
+  //     fiable) OU son nom exact (insensible à la casse). On résout d'abord par
+  //     ID, sinon par nom, et on stocke le NOM canonique du catalogue. Le prix
+  //     est récupéré du produit. Aucune correspondance -> on garde la valeur
+  //     reçue et le prix reste vide (saisie manuelle possible ensuite).
   let payoutAmount: number | null = null;
   let payoutCurrency: string | null = null;
+  let productName: string | null = lead.product ?? null;
   if (lead.product) {
-    const { data: prod } = await db
-      .from("project_products")
-      .select("price")
-      .ilike("name", lead.product)
-      .limit(1)
-      .maybeSingle();
-    if (prod?.price != null) {
-      payoutAmount = Number(prod.price);
-      payoutCurrency = "USD";
+    let prod = (
+      await db.from("project_products").select("name, price").eq("id", lead.product).maybeSingle()
+    ).data;
+    if (!prod) {
+      prod = (
+        await db.from("project_products").select("name, price").ilike("name", lead.product).maybeSingle()
+      ).data;
+    }
+    if (prod) {
+      productName = prod.name;
+      if (prod.price != null) {
+        payoutAmount = Number(prod.price);
+        payoutCurrency = "USD";
+      }
     }
   }
 
@@ -65,7 +73,7 @@ export async function ingestLead(
   const baseRow = {
     affiliate_id: affiliateId,
     offer_id: lead.offer_id ?? null,
-    product: lead.product ?? null,
+    product: productName,
     first_name: lead.first_name,
     last_name: lead.last_name ?? null,
     phone: lead.phone,
