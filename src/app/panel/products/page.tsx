@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmationRateFor, type RateOrder } from "@/lib/confirmationRate";
-import { formatProductPrice, formatPayout } from "@/lib/currency";
+import { formatProductPrice, formatPayout, currencyForCountry } from "@/lib/currency";
 import DownloadButton from "./DownloadButton.client";
+import DownloadJsonButton from "./DownloadJsonButton.client";
 import CopyRowButton from "./CopyRowButton.client";
 
 // Toujours recharger pour refléter les produits ajoutés par l'administrateur.
@@ -44,6 +45,17 @@ export default async function PanelProductsPage() {
     "Capacité journalière", "Taux de confirmation", "Payout", "Status",
     "Horaires de travail", "Informations supplémentaires",
   ];
+  // Catalogue JSON prêt pour l'intégration API / CRM de l'affilié.
+  const jsonData = products.map((p) => ({
+    name: p.name,
+    category: p.category ?? null,
+    country: p.country ?? null,
+    currency: currencyForCountry(p.country) || null,
+    price: p.price ?? null,
+    payout: p.payout ?? null,
+    status: p.status ?? null,
+  }));
+
   const csvRows = enriched.map(({ p, rate }) => [
     p.id, p.name, p.category ?? "", p.country ?? "",
     p.price != null ? formatProductPrice(p.price, p.country) : "",
@@ -64,7 +76,10 @@ export default async function PanelProductsPage() {
             Liste des produits disponibles, mise à jour automatiquement à chaque ajout par l'administrateur.
           </p>
         </div>
-        <DownloadButton headers={csvHeaders} rows={csvRows} filename="produits.csv" />
+        <div className="flex gap-2">
+          <DownloadJsonButton data={jsonData} filename="produits.json" />
+          <DownloadButton headers={csvHeaders} rows={csvRows} filename="produits.csv" />
+        </div>
       </div>
 
       {error && (
