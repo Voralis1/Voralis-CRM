@@ -1,0 +1,29 @@
+{
+  "info": {
+    "name": "Voralis Affiliate API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Lead",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{API_TOKEN}}", "type": "text" },
+          { "key": "Content-Type", "value": "application/json", "type": "text" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"offer_id\": \"offer_123\",\n  \"first_name\": \"Jean\",\n  \"phone\": \"+221770000000\",\n  \"country\": \"SN\"\n}"
+        },
+        "url": {
+          "raw": "https://example.com/api/v1/leads",
+          "protocol": "https",
+          "host": ["example","com"],
+          "path": ["api","v1","leads"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

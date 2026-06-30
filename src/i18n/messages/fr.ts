@@ -1,0 +1,72 @@
+// Dictionnaire FRANÇAIS — langue de référence (source de vérité).
+// Toute clé manquante dans une autre langue retombe automatiquement sur le français.
+export const fr = {
+  language: {
+    label: "Langue",
+    fr: "Français",
+    en: "English",
+    pt: "Português",
+    ru: "Русский",
+  },
+  common: {
+    signOut: "Déconnexion",
+    save: "Enregistrer",
+    cancel: "Annuler",
+    delete: "Supprimer",
+    edit: "Éditer",
+    create: "Créer",
+    apply: "Appliquer",
+    loading: "Chargement…",
+    search: "Rechercher",
+    yes: "Oui",
+    no: "Non",
+  },
+  layout: {
+    adminTitle: "Back-office VORALIS",
+    panelTitle: "Espace Affilié",
+    mbTitle: "Achat d'espaces publicitaires",
+  },
+  nav: {
+    // Back-office (admin)
+    dashboard: "Tableau de bord",
+    orders: "Commandes des affiliés",
+    mbOrders: "Commandes des acheteurs d'espaces publicitaires",
+    myOrders: "Mes commandes",
+    bulkUpdate: "Mise à jour",
+    products: "Gestion de produits",
+    affiliates: "Réseau d'affiliés & affiliés",
+    statuses: "Gestion des statuts",
+    statistics: "Statistiques",
+    payout: "Payout",
+    // Panel (affilié)
+    adSpend: "Dépenses des publicités",
+    results: "Résultats",
+    panelHome: "Tableau de bord",
+    myLeads: "Mes commandes",
+    panelProducts: "Produits",
+    apiPostback: "API & Postback",
+    account: "Mon compte",
+  },
+  navSub: {
+    dashboard: "Vue globale & KPI",
+    orders: "Leads & statuts",
+    mbOrders: "Commandes des acheteurs d'espaces",
+    bulkUpdate: "Mise à jour en masse",
+    products: "Catalogue & projets",
+    affiliates: "Réseaux & tokens",
+    statuses: "Gestion des statuts",
+    statistics: "Analyses détaillées",
+    payout: "Paiements affiliés",
+    panelHome: "Tableau de bord",
+    myLeads: "Suivi des commandes",
+    panelProducts: "Produits & flux",
+    apiPostback: "API & postback",
+    account: "Mon compte",
+    mbDashboard: "Vue d'ensemble",
+    myOrders: "Mes commandes",
+    adSpend: "Dépenses publicitaires",
+    results: "Résultats & marge",
+  },
+};
+
+export type Messages = typeof fr;
