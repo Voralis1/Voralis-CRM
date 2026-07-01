@@ -6,7 +6,7 @@ This guide explains how to **send your leads**, **track their statuses** and **r
 
 | Parameter | Value |
 |---|---|
-| Base URL | `https://www.voralisnatural.com` (replace with the URL provided to you) |
+| Base URL | `https://www.voralisnatural.com`|
 | Format | JSON (UTF-8) |
 | Authentication | Your personal **API token**, in the `Authorization` header |
 

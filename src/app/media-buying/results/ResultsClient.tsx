@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
+import { canonicalCountry } from "@/lib/currency";
 
 const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered"]);
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+const normCountry = (v: unknown) => canonicalCountry(String(v ?? "")).toLowerCase();
 const inRange = (d: string, from: string, to: string) => (!from || d >= from) && (!to || d <= to);
 
 // Argent : "$X.XX", ou "—" si dénominateur 0 (jamais de division par zéro).
@@ -24,24 +26,24 @@ export default function ResultsClient({ spend, orders }: { spend: any[]; orders:
       (s) =>
         inRange(String(s.date), from, to) &&
         (!buyer || norm(s.buyer_name).includes(norm(buyer))) &&
-        (!country || norm(s.country) === norm(country))
+        (!country || normCountry(s.country) === normCountry(country))
     );
     const oFilt = orders.filter(
       (o) =>
         inRange(String(o.created_at).slice(0, 10), from, to) &&
-        (!country || norm(o.country) === norm(country))
+        (!country || normCountry(o.country) === normCountry(country))
     );
 
     const groups = new Map<string, any>();
     for (const s of sFilt) {
-      const key = `${norm(s.buyer_name)}|${norm(s.campaign)}|${norm(s.country)}`;
+      const key = `${norm(s.buyer_name)}|${norm(s.campaign)}|${normCountry(s.country)}`;
       const g = groups.get(key) ?? { buyer: s.buyer_name || "—", campaign: s.campaign || "—", country: s.country || "—", spent: 0 };
       g.spent += Number(s.amount_usd) || 0;
       groups.set(key, g);
     }
 
     return Array.from(groups.values()).map((g) => {
-      const rel = oFilt.filter((o) => norm(o.campaign) === norm(g.campaign) && norm(o.country) === norm(g.country));
+      const rel = oFilt.filter((o) => norm(o.campaign) === norm(g.campaign) && normCountry(o.country) === normCountry(g.country));
       const leads = rel.length;
       const confirmed = rel.filter((o) => CONFIRMED.has(o.status)).length;
       const delivered = rel.filter((o) => o.status === "delivered").length;

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { canonicalCountry } from "@/lib/currency";
 import { getServerT } from "@/i18n/server";
 import KpiCard from "@/components/KpiCard";
 import HeroBanner from "@/components/HeroBanner";
@@ -67,7 +68,7 @@ export default async function AdminDashboard() {
 
   const countryMap = new Map<string, number>();
   (leadsByCountry || []).forEach((o: any) => {
-    const key = o.country;
+    const key = canonicalCountry(o.country);
     countryMap.set(key, (countryMap.get(key) || 0) + 1);
   });
 
