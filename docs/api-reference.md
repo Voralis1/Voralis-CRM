@@ -6,7 +6,7 @@ Trois familles d'endpoints :
 2. **API back-office** (`/api/admin/*`, `/api/signup`) — auth par **session Supabase** (cookies), protégée par le middleware.
 3. **Interne** (`/api/internal/dispatch`) — auth par **`CRON_SECRET`**.
 
-Codes d'erreur applicatifs : `AUTH`, `VALIDATION`, `BAD_JSON`, `OFFER_NOT_FOUND`, `DUPLICATE_LEAD`, `SERVER`.
+Codes d'erreur applicatifs : `AUTH`, `VALIDATION`, `BAD_JSON`, `DUPLICATE_LEAD`, `SERVER`.
 
 ---
 
@@ -20,19 +20,21 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 | Champ | Requis | Règle |
 |-------|:-----:|-------|
 | `first_name` | ✅ | 1–120 |
-| `last_name` | ✅ | 1–120 |
 | `phone` | ✅ | 6–20, `^[+0-9\s().-]+$` |
-| `address` | ✅ | 1–300 |
-| `city` | ✅ | 1–120 |
+| `country` | ✅ | 2–3 lettres, `^[A-Za-z]{2,3}$`, mis en majuscules |
 | `quantity` | ✅ | entier 1–99 |
 | `affiliate` | ✅ | 1–255 (sous-affilié / tracking) |
-| `product` | ✅ | 1–200 (ID produit ou nom exact) |
-| `country` | ✅ | 2–3 lettres, `^[A-Za-z]{2,3}$`, mis en majuscules |
-| `offer_id` | ⬜ | ≥ 1 |
+| `product_id` | ✅* | 1–200 (ID catalogue, prioritaire sur `product_name`) |
+| `product_name` | ✅* | 1–200 (nom exact, insensible à la casse) |
+| `last_name` | ⬜ | ≤ 120 |
+| `address` | ⬜ | ≤ 300 |
+| `city` | ⬜ | ≤ 120 |
 | `ip` | ⬜ | ≤ 60 |
 | `user_agent` | ⬜ | ≤ 400 |
 | `sub3`, `sub4`, `sub5` | ⬜ | ≤ 255 |
 | `comment` | ⬜ | ≤ 1000 |
+
+\* Au moins un des deux (`superRefine` dans `validation.ts`) : `product_id` ou `product_name` requis, sinon `400 VALIDATION` (`details.product_id`).
 
 **201**
 ```json
@@ -46,7 +48,6 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 | 403 | `AUTH` | compte affilié suspendu |
 | 400 | `BAD_JSON` | corps JSON invalide |
 | 400 | `VALIDATION` | champs invalides (`details` fourni) |
-| 403 | `OFFER_NOT_FOUND` | offre inconnue ou inactive |
 | 409 | `DUPLICATE_LEAD` | doublon (même téléphone < 30 j) — `message` contient le `public_id` existant |
 | 500 | `SERVER` | échec de création |
 
@@ -60,7 +61,7 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 **200**
 ```json
 {
-  "public_id": "000123", "offer_id": "AO-LUMORA-001",
+  "public_id": "000123", "product_id": "218022", "product": "PERDA DE PESO",
   "status": "confirmed", "status_label": "Confirmé",
   "country": "AO", "created_at": "…", "updated_at": "…",
   "affiliate": "fb_camp_123", "sub3": "…",
@@ -71,11 +72,8 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 
 ---
 
-### `GET /api/v1/offers` — lister les offres
-**Auth :** Bearer.
-```json
-{ "offers": [ { "id":"AO-LUMORA-001","name":"…","country":"AO","payout":5.5,"currency":"USD","payout_model":"confirmed","status":"active" } ] }
-```
+### Catalogue produits
+Pas d'endpoint public. Le catalogue complet (`id`, `name`, `country`, `price`, `payout`) est téléchargeable en JSON/CSV depuis le panneau affilié, page **Produits**. Utiliser l'`id` en `product_id` pour un match fiable, ou le nom exact en `product_name`.
 
 ---
 
@@ -87,9 +85,10 @@ Même flux interne que `/api/v1/leads`, avec mapping des champs LeadVertex :
 | LeadVertex | → Voralis |
 |------------|-----------|
 | `fio` | `first_name` + `last_name` (split au 1er espace) |
-| `phone`, `address`, `city`, `country`, `product`, `ip` | identiques |
+| `phone`, `address`, `city`, `country`, `ip` | identiques |
+| `product` / `goods[0][title]` | `product_name` (un des deux `product_*` requis) |
 | `goods[0][quantity]` | `quantity` |
-| `goodID` / `goods[0][goodID]` | `offer_id` (optionnel) |
+| `goodID` / `goods[0][goodID]` | `product_id` (un des deux `product_*` requis) |
 | `externalWebmaster` | `affiliate` |
 | `utm_campaign` / `utm_medium` / `utm_content` | `sub3` / `sub4` / `sub5` |
 | `domain`, `additional14`, `additional15` | regroupés dans `comment` |
@@ -112,14 +111,15 @@ Erreurs : mêmes `error_code`, format `{ "status": "error", "error_code": "…",
 
 ## 2. Flux d'intake (logique partagée)
 
+En amont, `leadSchema.safeParse` (`src/lib/validation.ts`) valide le payload — via `superRefine`, `product_id` **ou** `product_name` doit être fourni (au moins un des deux), sinon `400 VALIDATION` avant même d'appeler `ingestLead`.
+
 `src/lib/leads.ts` → `ingestLead(affiliateId, lead)` :
 
-1. **Offre (optionnelle)** : si `offer_id`, vérifie existence + `status = active`, sinon `OFFER_NOT_FOUND` (403).
-2. **Déduplication** : recherche par `phone` sur `orders` (hors `trash`) sur **30 jours** glissants → `DUPLICATE_LEAD` (409) si trouvé.
-3. **Résolution produit** : lookup par ID puis par nom (`ilike`). Si trouvé → nom canonique + `price` posé comme `payout_amount` (USD).
-4. **Insertion** : `public_id` via `nextOrderPublicId()` (6 chiffres, retry 4×), statut initial `new`.
-5. **Historique** : ligne `status_history` (`from=null`, `to=new`, note « Lead reçu via API »).
-6. **Sous-affilié** : upsert dans `affiliate` `(network_id, name)`.
+1. **Déduplication** : recherche par `phone` sur `orders` (hors `trash`) sur **30 jours** glissants → `DUPLICATE_LEAD` (409) si trouvé.
+2. **Résolution produit** : lookup exact par `product_id` (fallback `product_name` par `ilike` sinon). Si trouvé dans `project_products` → `product_id`/nom canonique + `price` posé comme `payout_amount` (USD). Sans correspondance, la valeur reçue est conservée en texte libre dans `product` et `product_id` reste `null` (contrainte FK).
+3. **Insertion** : `public_id` via `nextOrderPublicId()` (6 chiffres, retry 4×), statut initial `new`.
+4. **Historique** : ligne `status_history` (`from=null`, `to=new`, note « Lead reçu via API »).
+5. **Sous-affilié** : upsert dans `affiliate` `(network_id, name)`.
 
 ---
 
@@ -149,10 +149,10 @@ Erreurs : mêmes `error_code`, format `{ "status": "error", "error_code": "…",
 |-------|--------|
 | `{lead_id}` | `public_id` |
 | `{status}` / `{status_label}` | statut |
-| `{offer_id}` | offre |
+| `{product_id}` | produit |
 | `{country}` | pays |
 | `{payout}` | `payout_amount` (ou `0`) |
-| `{currency}` | `payout_currency` / devise offre / `USD` |
+| `{currency}` | `payout_currency` / devise produit / `USD` |
 | `{quantity}` | quantité (ou `1`) |
 | `{comment}` | commentaire |
 | `{affiliate}` | sous-affilié |

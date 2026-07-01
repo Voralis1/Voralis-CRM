@@ -45,8 +45,8 @@ Content-Type: application/json
 | `country` | ✓ | text | 2–3 letter country code (e.g. `SN`, `CI`, `GN`, `AGO`) |
 | `quantity` | ✓ | integer | 1 to 99 |
 | `affiliate` | ✓ | text | Your sub-affiliate / source ID (e.g. `fb_camp_12`). Max 255 |
-| `product_id` | — | text | Product ID from the products catalog. Takes priority over `product_name` if both are sent. Max 200 |
-| `product_name` | — | text | Exact product name (case-insensitive). Used only if `product_id` is absent or unmatched. Max 200 |
+| `product_id` | ✓* | text | Product ID from the products catalog. Takes priority over `product_name` if both are sent. Max 200 |
+| `product_name` | ✓* | text | Exact product name (case-insensitive). Used if `product_id` is absent. Max 200 |
 | `last_name` | — | text | Last name. Max 120 |
 | `address` | — | text | Address. Max 300 |
 | `city` | — | text | City. Max 120 |
@@ -55,7 +55,9 @@ Content-Type: application/json
 | `sub3`, `sub4`, `sub5` | — | text | Free tracking parameters. Max 255 |
 | `comment` | — | text | Internal note. Max 1000 |
 
-> `product_id`, `product_name`, `last_name`, `address` and `city` are optional: a lead can be sent without them. When provided, the same length/format limits above still apply.
+> \* `product_id` **or** `product_name` is required — at least one of the two must be sent (both together is fine, `product_id` then takes priority). Omitting both returns a `400 VALIDATION` error.
+>
+> `last_name`, `address` and `city` remain fully optional: a lead can be sent without them.
 
 ### Country codes (VORALIS abbreviations)
 
@@ -104,6 +106,7 @@ curl -X POST https://www.voralisnatural.com/api/v1/leads \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
+    "product_id": "218022",
     "first_name": "Joao",
     "phone": "+244923000000",
     "country": "AGO",

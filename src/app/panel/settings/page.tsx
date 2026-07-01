@@ -72,6 +72,7 @@ export default async function PanelSettings() {
             <div className="text-sm font-medium text-ink">{t("aff.settings.minPayload")}</div>
             <div className="mt-2 rounded bg-base p-3 text-[11px] text-ink font-mono overflow-x-auto border border-line">
               {`{
+  "product_id": "218022",
   "first_name": "Jean",
   "phone": "+221770000000",
   "country": "SN",
@@ -83,9 +84,10 @@ export default async function PanelSettings() {
 
           <div>
             <div className="text-sm font-medium text-ink">{t("aff.settings.optionalFields")}</div>
+            <p className="mt-1 text-xs text-ink-muted">
+              <code>product_id</code> ou <code>product_name</code> — un des deux est <strong>obligatoire</strong> (product_id prioritaire si les deux sont envoyés).
+            </p>
             <ul className="mt-2 list-disc pl-5 text-sm text-ink-muted">
-              <li><code>product_id</code> (ID du catalogue produits, prioritaire sur product_name)</li>
-              <li><code>product_name</code> (nom exact du produit)</li>
               <li><code>last_name</code></li>
               <li><code>address</code></li>
               <li><code>city</code></li>

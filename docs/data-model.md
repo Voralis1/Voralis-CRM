@@ -10,7 +10,7 @@ Source : `supabase/schema.sql` + migrations (`supabase/*.sql`) et `src/lib/types
 | Enum | Valeurs | Usage |
 |------|---------|-------|
 | `user_role` | `admin`, `affiliate`, `media_buyer` | Rôle d'un profil. *(L'ancien `agent` a été migré vers `admin`.)* |
-| `payout_model` | `confirmed`, `delivered` | Statut qui déclenche la facturation du payout d'une offre |
+| `payout_model` (usage historique ; `project_products.payout_model` est en `text` + `check`) | `confirmed`, `delivered` | Statut qui déclenche la facturation du payout d'un produit |
 | `order_status` | `new`, `duplicate`, `trash`, `processing`, `no_answer`, `callback`, `confirmed`, `rejected`, `shipped`, `in_delivery`, `delivered`, `returned`, `cancelled` | Statut d'un lead (13 valeurs) |
 | `postback_state` | `pending`, `sent`, `failed` | État de livraison d'un postback |
 
@@ -51,25 +51,14 @@ Créé automatiquement à l'inscription via le trigger `handle_new_user` (functi
 
 > Une table héritée `affiliates` (singulier→pluriel) existe encore pour compatibilité ; le modèle courant est `affiliate_network` + `affiliate`. `drop_old_affiliate_fk.sql` finalise la transition de la FK de `orders`.
 
-### `offers` — offres
-| Colonne | Type | Notes |
-|---------|------|-------|
-| `id` | text PK | ex. `AO-LUMORA-001` |
-| `name`, `product` | text | |
-| `country` | char(2) | ISO2 |
-| `payout` | numeric(10,2) | commission |
-| `currency` | char(3) | défaut `USD` |
-| `payout_model` | `payout_model` | `confirmed` / `delivered` |
-| `status` | text | `active` / `paused` |
-
 ### `orders` — leads (table pivot)
 | Colonne | Type | Notes |
 |---------|------|-------|
 | `id` | uuid PK | UUID interne |
 | `public_id` | text **unique** | numérique séquentiel `000001`… |
 | `affiliate_id` | uuid | → `affiliate_network.id` (restrict) |
-| `offer_id` | text **nullable** | → `offers.id` (optionnel depuis migration) |
-| `product` | text | nom/SKU libre |
+| `product_id` | text **nullable** | → `project_products.id` (set null), résolu depuis `product_id`/`product_name` de l'API |
+| `product` | text | nom/SKU libre (nom canonique du produit résolu, ou valeur brute si non trouvée) |
 | `first_name` | text | requis |
 | `last_name` | text | |
 | `phone` | text | requis, indexé |
@@ -114,7 +103,7 @@ Index : `affiliate_id`, `status`, `phone`, `created_at DESC`, `paid_at`.
 `id` (text PK) · `name` · `created_at` (date) · `expires_at` (date) · `product_count` (int).
 
 ### `project_products` — produits d'un projet
-`id` (text PK) · `project_id` → `projects` (cascade) · `name` · `description` · `price` (numeric(12,2)) · `measure` · `country` · `quantity` · `category` · `daily_capacity` · `confirmation_rate` (numeric(5,2)) · `payout` (numeric(12,2)) · `status` (défaut `active`) · `working_hours`. Sert de **catalogue affilié** et alimente le calcul du payout.
+`id` (text PK) · `project_id` → `projects` (cascade) · `name` · `description` · `price` (numeric(12,2)) · `measure` · `country` · `quantity` · `category` · `daily_capacity` · `confirmation_rate` (numeric(5,2)) · `payout` (numeric(12,2)) · `payout_model` (text, `check in ('confirmed','delivered')`, défaut `delivered`) · `currency` (text, défaut `USD`) · `status` (défaut `active`) · `working_hours`. Sert de **catalogue affilié**, cible de `orders.product_id`, et seule source de vérité pour le calcul du payout (`payout`/`payout_model`/`currency`) — remplace l'ancienne table `offers`.
 
 ### `order_statuses` — statuts personnalisés (admin)
 `id` (text PK) · `title` · `group_name` · `hide_date_from_affiliates` (bool) · `sort_label` · `created_at`.
@@ -173,7 +162,6 @@ Helpers SQL : `current_role_name()` (rôle courant via `profiles`) et `my_affili
 | `profiles` | soi-même, ou admin (tout) | — |
 | `affiliate_network` | tous (authentifiés) | propriétaire (`auth_user_id`) ou admin |
 | `affiliate` | tous (authentifiés) | admin |
-| `offers` | tous (authentifiés) | admin |
 | `orders` | ses propres leads (`affiliate_id = my_affiliate_id()`) ou admin | admin uniquement |
 | `status_history` | admin ; affilié pour ses propres commandes | (trigger) |
 | `postbacks` | siens (`my_affiliate_id()`) ou admin | (système) |
@@ -207,9 +195,9 @@ Helpers SQL : `current_role_name()` (rôle courant via `profiles`) et `my_affili
 
 ## 9. Mécanique du payout
 
-1. À la **création du lead**, si le produit correspondant a un `price`, `payout_amount` est posé (en `USD`).
+1. À la **création du lead**, si le produit correspondant (résolu via `product_id`/`product_name`) a un `price`, `payout_amount` est posé (en `USD`).
 2. L'**admin** peut aussi fixer/ajuster `payout_amount` et `payout_currency` sur la commande.
-3. Le statut facturable dépend du `payout_model` de l'offre (`confirmed` ou `delivered`).
+3. Au changement de statut (`changeStatus`/`bulkChangeStatus`), si `payout_amount` est encore nul, le serveur pose `payout`/`currency` depuis `project_products` (via `orders.product_id`) dès que le statut atteint le `payout_model` du produit (`confirmed` ou `delivered`).
 4. L'écran **Payout** somme les commandes confirmées non payées (`paid_at IS NULL`) par affilié ; le bouton « Payé » pose `paid_at` (= soldé).
 5. Dans le postback, la macro `{payout}` vaut `0` tant que `payout_amount` est nul.
 
@@ -228,3 +216,4 @@ Helpers SQL : `current_role_name()` (rôle courant via `profiles`) et `my_affili
 | `create_affiliate_model.sql` | nouveau modèle `admin` / `affiliate_network` / `affiliate` ; `sub2` → `affiliate` |
 | `fix_affiliate_rls.sql` | `my_affiliate_id()` pointe sur `affiliate_network` |
 | `drop_old_affiliate_fk.sql` | retire l'ancienne FK `orders.affiliate_id → affiliates` |
+| `migrate_remove_offers.sql` | ajoute `payout_model`/`currency` à `project_products` ; ajoute `orders.product_id` (→ `project_products.id`) avec backfill best-effort depuis `offer_id` ; supprime `orders.offer_id` et la table `offers` |

@@ -31,28 +31,29 @@ Content-Type: application/json
 
 ### Champs du corps JSON
 
-| Champ        | Obligatoire | Règle / format |
-|--------------|:-----------:|----------------|
-| `first_name` | ✅ | Prénom — 1 à 120 caractères. |
-| `last_name`  | ✅ | Nom — 1 à 120 caractères. |
-| `phone`      | ✅ | 6 à 20 caractères. Caractères autorisés : chiffres, `+ ( ) . - espace`. |
-| `address`    | ✅ | Adresse — 1 à 300 caractères. |
-| `city`       | ✅ | Ville — 1 à 120 caractères. |
-| `quantity`   | ✅ | Quantité — entier de 1 à 99. |
-| `affiliate`  | ✅ | Votre identifiant d'affilié (ex. `3379`). 1 à 255 caractères. |
-| `product`    | ✅ | **ID du produit (recommandé)** ou son nom exact. L'ID est plus fiable — récupérez-le dans le catalogue (téléchargeable en JSON depuis votre espace). |
-| `country`    | ✅ | Abréviation pays **2 à 3 lettres** : `SN, CI, BZV, ML, GN, AGO, GAB, BF, NG, TG`. |
-| `ip`         | — | IP du prospect (recommandé pour l'antifraude). |
-| `user_agent` | — | User-agent du prospect (recommandé). |
-| `sub3`…`sub5`| — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
-| `comment`    | — | Note libre (contexte, remarques…) — ≤ 1000 caractères. |
+| Champ          | Obligatoire | Règle / format |
+|----------------|:-----------:|----------------|
+| `first_name`   | ✅ | Prénom — 1 à 120 caractères. |
+| `phone`        | ✅ | 6 à 20 caractères. Caractères autorisés : chiffres, `+ ( ) . - espace`. |
+| `country`      | ✅ | Abréviation pays **2 à 3 lettres** : `SN, CI, BZV, ML, GN, AGO, GAB, BF, NG, TG`. |
+| `quantity`     | ✅ | Quantité — entier de 1 à 99. |
+| `affiliate`    | ✅ | Votre identifiant d'affilié (ex. `3379`). 1 à 255 caractères. |
+| `product_id`   | ✅* | **ID du produit (recommandé)** — prioritaire sur `product_name` si les deux sont envoyés. |
+| `product_name` | ✅* | Nom exact du produit (insensible à la casse), utilisé si `product_id` absent. |
+| `last_name`    | — | Nom — ≤ 120 caractères. |
+| `address`      | — | Adresse — ≤ 300 caractères. |
+| `city`         | — | Ville — ≤ 120 caractères. |
+| `ip`           | — | IP du prospect (recommandé pour l'antifraude). |
+| `user_agent`   | — | User-agent du prospect (recommandé). |
+| `sub3`…`sub5`  | — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
+| `comment`      | — | Note libre (contexte, remarques…) — ≤ 1000 caractères. |
 
-> **Champs obligatoires :** `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`, `product`, `country`.
+> **Champs obligatoires :** `first_name`, `phone`, `country`, `quantity`, `affiliate`, et **au moins un** de `product_id`/`product_name` (\* — omettre les deux renvoie une erreur `400 VALIDATION`).
 
 **Produits** : récupérez la liste (ID + nom + pays + payout) depuis votre espace
 (bouton **Télécharger JSON** sur la page Produits). Mettez de préférence l'**ID** du
-produit dans le champ `product` — c'est exact et insensible aux fautes de recopie.
-Le nom exact reste accepté (insensible à la casse).
+produit dans le champ `product_id` — c'est exact et insensible aux fautes de recopie.
+Le nom exact reste accepté via `product_name` (insensible à la casse).
 
 ### Exemple (cURL)
 
@@ -68,7 +69,7 @@ curl -X POST https://www.voralisnatural.com/api/v1/leads \
     "city":"Conakry",
     "quantity":1,
     "affiliate":"3379",
-    "product":"perda de peso",
+    "product_name":"perda de peso",
     "country":"GN"
   }'
 ```
@@ -91,7 +92,7 @@ curl_setopt_array($ch, [
     "address"    => "Quartier Almamya",
     "city"       => "Conakry",
     "quantity"   => 1,
-    "product"    => "perda de peso",
+    "product_name" => "perda de peso",
     "country"    => "GN",
     "affiliate"  => "3379",
   ]),
@@ -117,7 +118,7 @@ const res = await fetch("https://www.voralisnatural.com/api/v1/leads", {
     address: "Quartier Almamya",
     city: "Conakry",
     quantity: 1,
-    product: "perda de peso",
+    product_name: "perda de peso",
     country: "GN",
     affiliate: "3379",
   }),
@@ -145,7 +146,7 @@ Conservez `lead_id` : il permet de suivre le statut du lead (§4) et il est renv
 | HTTP | `error_code`     | Signification | Action côté affilié |
 |:----:|------------------|---------------|---------------------|
 | 401  | `AUTH`           | Token manquant ou invalide | Vérifier le header `Authorization`. |
-| 403  | `OFFER_NOT_FOUND`| Compte affilié suspendu | Nous contacter. |
+| 403  | `AUTH`           | Compte affilié suspendu | Nous contacter. |
 | 400  | `VALIDATION`     | Un champ est manquant ou mal formé | Corriger selon `details`. |
 | 400  | `BAD_JSON`       | Corps JSON illisible | Vérifier le `Content-Type` et le JSON. |
 | 409  | `DUPLICATE_LEAD` | Téléphone déjà reçu il y a **moins de 30 jours** | Ne pas renvoyer ; gérer comme doublon. |
@@ -175,10 +176,10 @@ Plutôt que d'interroger l'API, nous pouvons **vous notifier** à chaque changem
 Communiquez-nous une **URL de postback** avec des macros, par ex. :
 
 ```
-https://votre-serveur.com/postback?id={lead_id}&status={status}&sub2={sub2}
+https://votre-serveur.com/postback?id={lead_id}&status={status}&payout={payout}
 ```
 
-Macros disponibles : `{lead_id}`, `{status}`, `{sub1}`…`{sub5}`, `{timestamp}`.
+Macros disponibles : `{lead_id}`, `{status}`, `{status_label}`, `{product_id}`, `{country}`, `{payout}`, `{currency}`, `{quantity}`, `{comment}`, `{affiliate}`, `{sub3}`…`{sub5}`, `{timestamp}`.
 En **POST**, le corps est signé (`X-Voralis-Signature` = HMAC-SHA256 du corps avec votre secret).
 
 ---
@@ -197,13 +198,14 @@ Content-Type: application/x-www-form-urlencoded
 
 | Champ LeadVertex            | Champ Voralis | Remarque |
 |-----------------------------|---------------|----------|
-| `fio`                       | `first_name` + `last_name` | **Obligatoire** : prénom **et** nom (découpé au 1er espace). |
+| `fio`                       | `first_name` (+ `last_name` facultatif) | **Obligatoire** : prénom requis, nom découpé au 1er espace s'il est présent. |
 | `phone`                     | `phone`       | **Obligatoire.** |
-| `address`                   | `address`     | **Obligatoire.** |
-| `city`                      | `city`        | **Obligatoire.** |
+| `address`                   | `address`     | Facultatif. |
+| `city`                      | `city`        | Facultatif. |
 | `goods[0][quantity]`        | `quantity`    | **Obligatoire** (entier ≥ 1). |
 | `country`                   | `country`     | **Obligatoire** — code ISO 2 lettres (mis en majuscules). |
-| `product`                   | `product`     | **Obligatoire** — nom exact du produit. |
+| `product` / `goods[0][title]` | `product_name` | Nom exact du produit. **Un des deux** (`product_name` ou `goodID`) est obligatoire. |
+| `goodID` / `goods[0][goodID]` | `product_id` | ID du produit, prioritaire sur `product_name`. **Un des deux** est obligatoire. |
 | `ip`                        | `ip`          | |
 | `externalWebmaster`         | `affiliate`   | **Obligatoire** — identifiant de votre affilié. |
 | `utm_campaign`              | `sub3`        | |
@@ -226,6 +228,7 @@ curl -X POST "https://www.voralisnatural.com/api/webmaster/v2/addOrder?token=vrl
   -d "country=GN" \
   -d "product=perda de peso" \
   -d "ip=197.149.242.31" \
+  -d "goodID=218022" \
   -d "externalWebmaster=3379"
 ```
 
@@ -247,6 +250,6 @@ En cas d'erreur : `{ "status": "error", "error_code": "...", "message": "..." }`
 ## Résumé express
 
 1. On vous donne **un token**.
-2. Vous faites un `POST /api/v1/leads` avec `Authorization: Bearer <token>` et le JSON du lead (obligatoires : `first_name`, `last_name`, `phone`, `address`, `city`, `quantity`, `affiliate`).
+2. Vous faites un `POST /api/v1/leads` avec `Authorization: Bearer <token>` et le JSON du lead (obligatoires : `first_name`, `phone`, `country`, `quantity`, `affiliate`, et `product_id` ou `product_name`).
 3. Un téléphone déjà vu < 30 j est refusé (409).
 4. Vous recevez un `lead_id` ; suivez le statut via l'API ou par postback.

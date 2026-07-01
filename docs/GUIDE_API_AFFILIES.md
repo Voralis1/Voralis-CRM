@@ -36,20 +36,22 @@ Content-Type: application/json
 
 | Champ | Obligatoire | Type | Règle / exemple |
 |-------|:-----------:|------|-----------------|
-| `product` | ✅ | texte | Nom exact du produit (ou identifiant produit). Max 200 |
 | `first_name` | ✅ | texte | Prénom. Max 120 |
-| `last_name` | ✅ | texte | Nom. Max 120 |
 | `phone` | ✅ | texte | 6 à 20 caractères. Chiffres, `+ ( ) - . espace` |
 | `country` | ✅ | texte | Code pays 2–3 lettres (ex. `SN`, `CI`, `GN`, `AGO`) |
-| `address` | ✅ | texte | Adresse. Max 300 |
-| `city` | ✅ | texte | Ville. Max 120 |
 | `quantity` | ✅ | entier | 1 à 99 |
 | `affiliate` | ✅ | texte | Votre identifiant de sous-affilié / source (ex. `fb_camp_12`). Max 255 |
-| `offer_id` | ⬜ | texte | Identifiant d'offre (facultatif) |
+| `product_id` | ✅* | texte | ID du produit dans le catalogue (prioritaire sur `product_name`). Max 200 |
+| `product_name` | ✅* | texte | Nom exact du produit, insensible à la casse. Max 200 |
+| `last_name` | ⬜ | texte | Nom. Max 120 |
+| `address` | ⬜ | texte | Adresse. Max 300 |
+| `city` | ⬜ | texte | Ville. Max 120 |
 | `ip` | ⬜ | texte | IP du client. Max 60 |
 | `user_agent` | ⬜ | texte | User-agent du client. Max 400 |
 | `sub3`, `sub4`, `sub5` | ⬜ | texte | Paramètres de tracking libres. Max 255 |
 | `comment` | ⬜ | texte | Note interne. Max 1000 |
+
+> \* `product_id` **ou** `product_name` est obligatoire — au moins l'un des deux doit être envoyé (les deux ensemble fonctionnent aussi, `product_id` étant alors prioritaire). Omettre les deux renvoie une erreur `400 VALIDATION`.
 
 ### Codes pays (abréviations VORALIS)
 
@@ -79,7 +81,7 @@ curl -X POST https://VOTRE-DOMAINE.com/api/v1/leads \
   -H "Authorization: Bearer VOTRE_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "product": "Lumora",
+    "product_name": "Lumora",
     "first_name": "Joao",
     "last_name": "Silva",
     "phone": "+244923000000",
@@ -122,7 +124,8 @@ curl https://VOTRE-DOMAINE.com/api/v1/leads/000123 \
 ```json
 {
   "public_id": "000123",
-  "offer_id": "AO-LUMORA-001",
+  "product_id": "218022",
+  "product": "PERDA DE PESO",
   "status": "confirmed",
   "status_label": "Confirmé",
   "country": "AGO",
@@ -139,32 +142,9 @@ Lead inconnu → `404`.
 
 ---
 
-## 4. Lister les offres disponibles
+## 4. Catalogue produits
 
-**`GET /api/v1/offers`**
-
-```bash
-curl https://VOTRE-DOMAINE.com/api/v1/offers \
-  -H "Authorization: Bearer VOTRE_TOKEN"
-```
-
-### Réponse — `200 OK`
-
-```json
-{
-  "offers": [
-    {
-      "id": "AO-LUMORA-001",
-      "name": "Lumora Angola",
-      "country": "AGO",
-      "payout": 6.00,
-      "currency": "USD",
-      "payout_model": "confirmed",
-      "status": "active"
-    }
-  ]
-}
-```
+Il n'y a pas d'endpoint public pour lister les produits. Le catalogue complet (ID, nom, pays, prix, payout) est téléchargeable en JSON/CSV depuis votre espace, page **« Produits »**. Utilisez l'`id` du produit en `product_id` pour un rattachement fiable (le nom exact fonctionne aussi, insensible à la casse).
 
 ---
 
@@ -189,7 +169,7 @@ Un lead évolue au fil de son traitement. Voici les statuts possibles :
 | `returned` | Retourné |
 | `cancelled` | Annulé |
 
-> La commission (**payout**) est due au statut facturable de l'offre (`confirmed` ou `delivered` selon l'offre).
+> La commission (**payout**) est due au statut facturable du produit (`confirmed` ou `delivered` selon le modèle de payout du produit).
 
 ---
 
@@ -204,7 +184,7 @@ Un lead évolue au fil de son traitement. Voici les statuts possibles :
 | `{lead_id}` | Identifiant du lead (ex. `000123`) |
 | `{status}` | Statut (ex. `confirmed`) |
 | `{status_label}` | Libellé du statut |
-| `{offer_id}` | Identifiant d'offre |
+| `{product_id}` | Identifiant du produit |
 | `{country}` | Pays |
 | `{payout}` | Montant de commission (`0` si non facturable) |
 | `{currency}` | Devise du payout |
@@ -236,7 +216,7 @@ https://votre-tracker.com/postback?clickid={sub3}&status={status}&payout={payout
 | `200` | Requête réussie (consultation) |
 | `400` | JSON invalide ou champs non conformes (voir `details`) |
 | `401` | Token manquant ou invalide |
-| `403` | Offre inconnue/inactive **ou** compte affilié suspendu |
+| `403` | Compte affilié suspendu |
 | `409` | Doublon (même téléphone déjà envoyé récemment) |
 | `500` | Erreur serveur — réessayez plus tard |
 
@@ -251,7 +231,7 @@ https://votre-tracker.com/postback?clickid={sub3}&status={status}&payout={payout
 }
 ```
 
-Codes d'erreur : `AUTH`, `VALIDATION`, `BAD_JSON`, `OFFER_NOT_FOUND`, `DUPLICATE_LEAD`, `SERVER`.
+Codes d'erreur : `AUTH`, `VALIDATION`, `BAD_JSON`, `DUPLICATE_LEAD`, `SERVER`.
 
 ---
 
@@ -266,4 +246,4 @@ Codes d'erreur : `AUTH`, `VALIDATION`, `BAD_JSON`, `OFFER_NOT_FOUND`, `DUPLICATE
 
 ## 9. Support
 
-Pour toute question d'intégration (token, offres, postbacks), contactez votre responsable de compte VORALIS.
+Pour toute question d'intégration (token, produits, postbacks), contactez votre responsable de compte VORALIS.

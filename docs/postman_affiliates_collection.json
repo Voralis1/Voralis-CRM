@@ -14,7 +14,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"offer_id\": \"offer_123\",\n  \"first_name\": \"Jean\",\n  \"phone\": \"+221770000000\",\n  \"country\": \"SN\"\n}"
+          "raw": "{\n  \"product_id\": \"218022\",\n  \"first_name\": \"Jean\",\n  \"phone\": \"+221770000000\",\n  \"country\": \"SN\",\n  \"quantity\": 1,\n  \"affiliate\": \"3379\"\n}"
         },
         "url": {
           "raw": "https://example.com/api/v1/leads",
