@@ -7,11 +7,11 @@ export const SUPPORTED_COUNTRIES = ["AO", "ML", "SN", "CI", "GN", "GA", "CG", "M
 export const leadSchema = z.object({
   // Offre facultative : un lead peut être envoyé sans la rattacher à une offre.
   offer_id: z.string().min(1).optional().nullable(),
-  // Produit (colonne "Produit" du tableau des leads) — obligatoire.
-  product: z.string().min(1, "product requis").max(200),
+  // Produit facultatif : un lead peut être envoyé sans produit précisé.
+  product: z.string().min(1).max(200).optional().nullable(),
   first_name: z.string().min(1, "first_name requis").max(120),
-  // Nom de famille obligatoire.
-  last_name: z.string().min(1, "last_name requis").max(120),
+  // Nom de famille facultatif.
+  last_name: z.string().max(120).optional().nullable(),
   phone: z
     .string()
     .min(6, "téléphone trop court")
@@ -22,9 +22,9 @@ export const leadSchema = z.object({
     .string()
     .regex(/^[A-Za-z]{2,3}$/, "code pays (2 à 3 lettres)")
     .transform((c) => c.toUpperCase()),
-  // Adresse, ville et quantité obligatoires.
-  address: z.string().min(1, "address requis").max(300),
-  city: z.string().min(1, "city requis").max(120),
+  // Adresse et ville facultatives ; quantité obligatoire.
+  address: z.string().max(300).optional().nullable(),
+  city: z.string().max(120).optional().nullable(),
   quantity: z.coerce.number().int().min(1, "quantity requis").max(99),
   ip: z.string().max(60).optional().nullable(),
   user_agent: z.string().max(400).optional().nullable(),
