@@ -25,12 +25,11 @@ const buildHeaders = (t: TFunc): string[] => [
 
 function buildRows(rows: any[]): string[][] {
   return rows.map((o) => {
-    const offers = o.offers as any;
     const affiliates = o.affiliate_network as any;
     const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
     return [
       o.public_id,
-      o.product ?? offers?.product ?? "",
+      o.product ?? "",
       o.country ?? "",
       affiliates?.name ?? "",
       o.affiliate ?? "",

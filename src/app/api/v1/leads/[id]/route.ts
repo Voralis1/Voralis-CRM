@@ -20,7 +20,7 @@ export async function GET(
   const { data: order } = await db
     .from("orders")
     .select(
-      "public_id, offer_id, status, country, created_at, updated_at, affiliate, sub3, payout_amount, payout_currency, affiliate_id"
+      "public_id, product_id, product, status, country, created_at, updated_at, affiliate, sub3, payout_amount, payout_currency, affiliate_id"
     )
     .eq("public_id", params.id)
     .single();

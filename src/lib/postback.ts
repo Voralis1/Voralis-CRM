@@ -18,17 +18,17 @@ function resolveTemplate(template: string, vars: Record<string, string>): string
   );
 }
 
-function buildVars(order: any, offer: any): Record<string, string> {
+function buildVars(order: any, product: any): Record<string, string> {
   // {payout} n'est renseigné que sur les statuts facturables (payout_amount posé en base).
   const billable = order.payout_amount != null;
   return {
     lead_id: order.public_id,
     status: order.status,
     status_label: order.status,
-    offer_id: order.offer_id,
+    product_id: order.product_id ?? "",
     country: order.country ?? "",
     payout: billable ? String(order.payout_amount) : "0",
-    currency: order.payout_currency ?? offer?.currency ?? "USD",
+    currency: order.payout_currency ?? product?.currency ?? "USD",
     quantity: String(order.quantity ?? 1),
     comment: order.comment ?? "",
     affiliate: order.affiliate ?? "",
@@ -84,12 +84,12 @@ export async function dispatchPending(limit = 25): Promise<{
       continue;
     }
 
-    // offer_id est optionnel : un lead peut ne pas être rattaché à une offre.
-    const { data: offer } = order.offer_id
-      ? await db.from("offers").select("*").eq("id", order.offer_id).single()
+    // product_id est optionnel : un lead peut ne pas être rattaché à un produit du catalogue.
+    const { data: product } = order.product_id
+      ? await db.from("project_products").select("currency").eq("id", order.product_id).single()
       : { data: null };
 
-    const vars = buildVars(order, offer);
+    const vars = buildVars(order, product);
     const method = (pb.method || aff.postback_method || "GET").toUpperCase();
 
     let url = aff.postback_url as string;

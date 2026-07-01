@@ -95,8 +95,8 @@ export async function POST(req: Request) {
   ].filter(Boolean).join(" | ") || undefined;
 
   const mapped = {
-    offer_id: pickGood(b, "goodID") || b.offer_id || b.goodId,
-    product: b.product || b["goods[0][title]"] || undefined,
+    product_id: pickGood(b, "goodID") || b.product_id || undefined,
+    product_name: b.product || b["goods[0][title]"] || undefined,
     first_name: firstName,
     last_name: lastName || undefined,
     phone: b.phone,

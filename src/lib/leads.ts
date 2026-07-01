@@ -18,19 +18,7 @@ export async function ingestLead(
 ): Promise<IngestResult> {
   const db = createAdminClient();
 
-  // 1) Offre FACULTATIVE : si un offer_id est fourni, il doit exister et être
-  //    actif (intégrité référentielle). Sinon, le lead est créé sans offre.
-  if (lead.offer_id) {
-    const { data: offer } = await db
-      .from("offers")
-      .select("id, status")
-      .eq("id", lead.offer_id)
-      .single();
-    if (!offer || offer.status !== "active")
-      return { ok: false, code: 403, error_code: "OFFER_NOT_FOUND", message: "Offre inconnue ou inactive" };
-  }
-
-  // 2) Déduplication sur le téléphone
+  // 1) Déduplication sur le téléphone
   const since = new Date(Date.now() - DEDUP_WINDOW_DAYS * 86400_000).toISOString();
   const { data: dup } = await db
     .from("orders")
@@ -43,36 +31,50 @@ export async function ingestLead(
   if (dup)
     return { ok: false, code: 409, error_code: "DUPLICATE_LEAD", message: `Lead déjà existant (${dup.public_id})` };
 
-  // 3a) Produit : l'affilié peut envoyer l'ID du produit (recommandé, plus
-  //     fiable) OU son nom exact (insensible à la casse). On résout d'abord par
-  //     ID, sinon par nom, et on stocke le NOM canonique du catalogue. Le prix
-  //     est récupéré du produit. Aucune correspondance -> on garde la valeur
-  //     reçue et le prix reste vide (saisie manuelle possible ensuite).
+  // 3a) Produit : l'affilié peut envoyer product_id (recommandé, plus fiable)
+  //     OU product_name (nom exact, insensible à la casse). product_id est
+  //     prioritaire si les deux sont fournis. Le prix est récupéré du produit
+  //     trouvé. Aucune correspondance -> on garde la valeur reçue en texte
+  //     libre (colonne `product`) et product_id reste vide (contrainte FK).
   let payoutAmount: number | null = null;
   let payoutCurrency: string | null = null;
-  let productName: string | null = lead.product ?? null;
-  if (lead.product) {
-    let prod = (
-      await db.from("project_products").select("name, price").eq("id", lead.product).maybeSingle()
+  let productName: string | null = null;
+  let productId: string | null = null;
+
+  if (lead.product_id) {
+    const prod = (
+      await db.from("project_products").select("id, name, price").eq("id", lead.product_id).maybeSingle()
     ).data;
-    if (!prod) {
-      prod = (
-        await db.from("project_products").select("name, price").ilike("name", lead.product).maybeSingle()
-      ).data;
-    }
     if (prod) {
+      productId = prod.id;
       productName = prod.name;
       if (prod.price != null) {
         payoutAmount = Number(prod.price);
         payoutCurrency = "USD";
       }
+    } else {
+      productName = lead.product_id;
+    }
+  } else if (lead.product_name) {
+    const prod = (
+      await db.from("project_products").select("id, name, price").ilike("name", lead.product_name).maybeSingle()
+    ).data;
+    if (prod) {
+      productId = prod.id;
+      productName = prod.name;
+      if (prod.price != null) {
+        payoutAmount = Number(prod.price);
+        payoutCurrency = "USD";
+      }
+    } else {
+      productName = lead.product_name;
     }
   }
 
   // 4) Insertion avec un identifiant public numérique (retry si collision).
   const baseRow = {
     affiliate_id: affiliateId,
-    offer_id: lead.offer_id ?? null,
+    product_id: productId,
     product: productName,
     first_name: lead.first_name,
     last_name: lead.last_name ?? null,

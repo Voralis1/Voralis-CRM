@@ -97,7 +97,7 @@ export async function GET(req: Request) {
   const db = createAdminClient();
   const { data, error } = await db
     .from("orders")
-    .select("offer_id, offers(product, payout), affiliate_id, affiliate_network(name), affiliate, status, payout_amount, quantity")
+    .select("product_id, product, project_products(name, payout), affiliate_id, affiliate_network(name), affiliate, status, payout_amount, quantity")
     .limit(10000);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -105,8 +105,8 @@ export async function GET(req: Request) {
   const rows = new Map<string, Acc>();
 
   for (const o of (data ?? []) as any[]) {
-    const product = o.offers?.product ?? o.offer_id ?? "—";
-    const price = Number(o.offers?.payout ?? 0);
+    const product = o.product ?? o.project_products?.name ?? "—";
+    const price = Number(o.project_products?.payout ?? 0);
     const network = o.affiliate_network?.name ?? "Inconnu"; // affiliate network = compte
     const affiliate = (o.affiliate && String(o.affiliate).trim()) || "—"; // sous-affilié
     const dimVals: Record<TextDim, string> = {

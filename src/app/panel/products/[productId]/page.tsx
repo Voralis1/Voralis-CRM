@@ -35,7 +35,7 @@ export default async function PanelProductDetail({ params }: { params: { product
 
   // Taux de confirmation global (agrégat de tous les leads, sans données perso).
   const admin = createAdminClient();
-  const { data: orders } = await admin.from("orders").select("status, offer_id, product");
+  const { data: orders } = await admin.from("orders").select("status, product_id, product");
   const rate = confirmationRateFor(product as any, (orders ?? []) as RateOrder[]);
 
   const status = product.status || "active";

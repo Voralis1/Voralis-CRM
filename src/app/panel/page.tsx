@@ -14,7 +14,7 @@ export default async function PanelDashboard() {
   const { data: orders } = networkId
     ? await supabase
         .from("orders")
-        .select("status, product, offer_id, paid_at")
+        .select("status, product, product_id, paid_at")
         .eq("affiliate_id", networkId)
     : { data: [] };
 
@@ -33,7 +33,7 @@ export default async function PanelDashboard() {
     payoutByName.set(String(p.name ?? "").trim().toLowerCase(), Number(p.payout ?? 0));
   }
   const leadPayout = (o: any): number => {
-    if (o.offer_id && payoutById.has(o.offer_id)) return payoutById.get(o.offer_id)!;
+    if (o.product_id && payoutById.has(o.product_id)) return payoutById.get(o.product_id)!;
     return payoutByName.get(String(o.product ?? "").trim().toLowerCase()) ?? 0;
   };
   const payoutTotal = rows

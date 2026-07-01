@@ -32,14 +32,13 @@ export function OrdersTable({ rows }: OrdersTableProps) {
         <tbody>
           {rows.map((o) => {
             const meta = STATUS_META[o.status as OrderStatus];
-            const offers = o.offers as any;
             const affiliates = o.affiliate_network as any;
             const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
             return (
               <tr key={o.id} className="align-top row-hover">
                 <td className="td font-mono text-xs">{o.public_id}</td>
-                <td className="td">{o.product ?? offers?.product ?? "—"}</td>
+                <td className="td">{o.product ?? "—"}</td>
                 <td className="td">{o.country}</td>
                 <td className="td">{affiliates?.name ?? "—"}</td>
                 <td className="td">{o.affiliate ?? "—"}</td>

@@ -45,17 +45,17 @@ Content-Type: application/json
 | `country` | ✓ | text | 2–3 letter country code (e.g. `SN`, `CI`, `GN`, `AGO`) |
 | `quantity` | ✓ | integer | 1 to 99 |
 | `affiliate` | ✓ | text | Your sub-affiliate / source ID (e.g. `fb_camp_12`). Max 255 |
-| `product` | — | text | Exact product name (or product ID). Max 200 |
+| `product_id` | — | text | Product ID from the products catalog. Takes priority over `product_name` if both are sent. Max 200 |
+| `product_name` | — | text | Exact product name (case-insensitive). Used only if `product_id` is absent or unmatched. Max 200 |
 | `last_name` | — | text | Last name. Max 120 |
 | `address` | — | text | Address. Max 300 |
 | `city` | — | text | City. Max 120 |
-| `offer_id` | — | text | Offer ID (optional) |
 | `ip` | — | text | Client IP. Max 60 |
 | `user_agent` | — | text | Client user-agent. Max 400 |
 | `sub3`, `sub4`, `sub5` | — | text | Free tracking parameters. Max 255 |
 | `comment` | — | text | Internal note. Max 1000 |
 
-> `product`, `last_name`, `address` and `city` are optional: a lead can be sent without them. When provided, the same length/format limits above still apply.
+> `product_id`, `product_name`, `last_name`, `address` and `city` are optional: a lead can be sent without them. When provided, the same length/format limits above still apply.
 
 ### Country codes (VORALIS abbreviations)
 
@@ -83,7 +83,7 @@ curl -X POST https://www.voralisnatural.com/api/v1/leads \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "product": "Lumora",
+    "product_name": "Lumora",
     "first_name": "Joao",
     "last_name": "Silva",
     "phone": "+244923000000",
@@ -141,7 +141,8 @@ curl https://www.voralisnatural.com/api/v1/leads/000123 \
 ```json
 {
   "public_id": "000123",
-  "offer_id": "AO-LUMORA-001",
+  "product_id": "218022",
+  "product": "PERDA DE PESO",
   "status": "confirmed",
   "status_label": "Confirmed",
   "country": "AGO",
@@ -158,32 +159,9 @@ Unknown lead → `404`.
 
 ---
 
-## 4. List available offers
+## 4. Product catalog
 
-**`GET /api/v1/offers`**
-
-```bash
-curl https://www.voralisnatural.com/api/v1/offers \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### Response — `200 OK`
-
-```json
-{
-  "offers": [
-    {
-      "id": "AO-LUMORA-001",
-      "name": "Lumora Angola",
-      "country": "AGO",
-      "payout": 6.00,
-      "currency": "USD",
-      "payout_model": "confirmed",
-      "status": "active"
-    }
-  ]
-}
-```
+There is no public endpoint to list products. The full catalog (ID, name, country, price, payout) is available as a JSON/CSV download from your dashboard, under **"Products"**. Use the product's `id` in `product_id` for the most reliable match, or its exact name in `product_name` (case-insensitive).
 
 ---
 
@@ -208,7 +186,7 @@ A lead progresses through several stages as it is processed. Possible statuses:
 | `returned` | Returned |
 | `cancelled` | Cancelled |
 
-> The commission (**payout**) is owed once the offer reaches its billable status (`confirmed` or `delivered`, depending on the offer).
+> The commission (**payout**) is owed once the product reaches its billable status (`confirmed` or `delivered`, depending on the product's payout model).
 
 ---
 
@@ -223,7 +201,7 @@ On every status change, VORALIS automatically calls your tracker URL to notify y
 | `{lead_id}` | Lead ID (e.g. `000123`) |
 | `{status}` | Status (e.g. `confirmed`) |
 | `{status_label}` | Status label |
-| `{offer_id}` | Offer ID |
+| `{product_id}` | Product ID |
 | `{country}` | Country |
 | `{payout}` | Commission amount (`0` if not billable) |
 | `{currency}` | Payout currency |
@@ -254,7 +232,7 @@ https://your-tracker.com/postback?clickid={sub3}&status={status}&payout={payout}
 | `200` | Request succeeded (lookup) |
 | `400` | Invalid JSON or non-compliant fields (see `details`) |
 | `401` | Missing or invalid token |
-| `403` | Unknown/inactive offer **or** suspended affiliate account |
+| `403` | Suspended affiliate account |
 | `409` | Duplicate (same phone number already sent recently) |
 | `500` | Server error — please retry later |
 
@@ -269,7 +247,7 @@ https://your-tracker.com/postback?clickid={sub3}&status={status}&payout={payout}
 }
 ```
 
-Error codes: `AUTH`, `VALIDATION`, `BAD_JSON`, `OFFER_NOT_FOUND`, `DUPLICATE_LEAD`, `SERVER`.
+Error codes: `AUTH`, `VALIDATION`, `BAD_JSON`, `DUPLICATE_LEAD`, `SERVER`.
 
 ---
 
@@ -284,7 +262,7 @@ Error codes: `AUTH`, `VALIDATION`, `BAD_JSON`, `OFFER_NOT_FOUND`, `DUPLICATE_LEA
 
 ## 9. Support
 
-For any integration questions (token, offers, postbacks), contact your VORALIS account manager.
+For any integration questions (token, products, postbacks), contact your VORALIS account manager.
 
 ---
 

@@ -36,9 +36,9 @@ export default async function PanelProductsPage() {
   const products = (data ?? []) as ProductRow[];
 
   // Taux de confirmation global (comme la page admin) -> service role pour
-  // lire l'agrégat de tous les leads (statut/offer_id/product, sans données perso).
+  // lire l'agrégat de tous les leads (statut/product_id/product, sans données perso).
   const admin = createAdminClient();
-  const { data: orders } = await admin.from("orders").select("status, offer_id, product");
+  const { data: orders } = await admin.from("orders").select("status, product_id, product");
   const allOrders = (orders ?? []) as RateOrder[];
 
   // Taux calculé une seule fois -> réutilisé par le tableau ET le CSV.

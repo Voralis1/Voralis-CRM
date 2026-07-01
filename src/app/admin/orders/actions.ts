@@ -30,18 +30,18 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   // requireStaff ci-dessus, on n'est donc plus dépendant de la RLS de session.
   const db = createAdminClient();
 
-  // Charger l'ordre + l'offre pour calculer le payout éventuel
+  // Charger l'ordre + le produit pour calculer le payout éventuel
   const { data: order } = await db
     .from("orders")
-    .select("id, offer_id, status, payout_amount")
+    .select("id, product_id, status, payout_amount")
     .eq("id", orderId)
     .single();
   if (!order) return;
 
-  const { data: offer } = await db
-    .from("offers")
+  const { data: product } = await db
+    .from("project_products")
     .select("payout, currency, payout_model")
-    .eq("id", order.offer_id)
+    .eq("id", order.product_id)
     .single();
 
   const patch: Record<string, any> = {
@@ -51,15 +51,15 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   if (next === "confirmed") patch.confirmed_at = new Date().toISOString();
   if (next === "delivered") patch.delivered_at = new Date().toISOString();
 
-  // Pose la commission quand le statut facturable de l'offre est atteint
+  // Pose la commission quand le statut facturable du produit est atteint
   if (
-    offer &&
-    ((offer.payout_model === "confirmed" && next === "confirmed") ||
-      (offer.payout_model === "delivered" && next === "delivered")) &&
+    product &&
+    ((product.payout_model === "confirmed" && next === "confirmed") ||
+      (product.payout_model === "delivered" && next === "delivered")) &&
     order.payout_amount == null
   ) {
-    patch.payout_amount = offer.payout;
-    patch.payout_currency = offer.currency;
+    patch.payout_amount = product.payout;
+    patch.payout_currency = product.currency;
   }
 
   // Mise à jour. Le trigger enfile le postback.
@@ -106,10 +106,10 @@ export async function bulkChangeStatus(
   if (ids.length === 0)
     return { updated: [], notFound: [], failed: [], error: "Aucun ID fourni." };
 
-  // Charge les commandes correspondantes (+ l'offre pour le payout).
+  // Charge les commandes correspondantes (+ le produit pour le payout).
   const { data: orders, error: selectError } = await db
     .from("orders")
-    .select("id, public_id, offer_id, status, payout_amount")
+    .select("id, public_id, product_id, status, payout_amount")
     .in("public_id", ids);
 
   if (selectError)
@@ -124,10 +124,10 @@ export async function bulkChangeStatus(
   let firstError: string | undefined;
 
   for (const order of found) {
-    const { data: offer } = await db
-      .from("offers")
+    const { data: product } = await db
+      .from("project_products")
       .select("payout, currency, payout_model")
-      .eq("id", order.offer_id)
+      .eq("id", order.product_id)
       .single();
 
     const patch: Record<string, any> = {
@@ -138,13 +138,13 @@ export async function bulkChangeStatus(
     if (next === "delivered") patch.delivered_at = new Date().toISOString();
 
     if (
-      offer &&
-      ((offer.payout_model === "confirmed" && next === "confirmed") ||
-        (offer.payout_model === "delivered" && next === "delivered")) &&
+      product &&
+      ((product.payout_model === "confirmed" && next === "confirmed") ||
+        (product.payout_model === "delivered" && next === "delivered")) &&
       order.payout_amount == null
     ) {
-      patch.payout_amount = offer.payout;
-      patch.payout_currency = offer.currency;
+      patch.payout_amount = product.payout;
+      patch.payout_currency = product.currency;
     }
 
     // On renvoie la ligne modifiée pour confirmer l'écriture.

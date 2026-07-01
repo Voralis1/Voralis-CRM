@@ -5,39 +5,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { nextOrderPublicId } from "@/lib/orderId";
 import { getMyNetworkId } from "@/lib/auth";
 
-// Garantit qu'une offre existe pour un produit du catalogue (cible de la FK
-// orders.offer_id) et renvoie l'offer_id. Crée l'offre si nécessaire.
-async function ensureOfferForProduct(db: any, productId: string): Promise<string> {
-  const { data: product, error: prodErr } = await db
+// Résout un produit du catalogue par son ID (cible de orders.product_id).
+async function resolveProduct(db: any, productId: string): Promise<{ id: string; name: string }> {
+  const { data: product, error } = await db
     .from("project_products")
-    .select("id, name, price, country")
+    .select("id, name")
     .eq("id", productId)
     .single();
-  if (prodErr || !product) throw new Error("Produit introuvable.");
-
-  const offerId = product.id;
-  const { data: existingOffer } = await db
-    .from("offers")
-    .select("id")
-    .eq("id", offerId)
-    .maybeSingle();
-
-  if (!existingOffer) {
-    const offerCountry =
-      product.country && product.country.length === 2 ? product.country.toUpperCase() : "XX";
-    const { error: offerErr } = await db.from("offers").insert({
-      id: offerId,
-      name: product.name,
-      product: product.name,
-      country: offerCountry,
-      payout: Number(product.price ?? 0),
-      currency: "USD",
-      payout_model: "delivered",
-      status: "active",
-    });
-    if (offerErr) throw new Error(`Erreur de création de l'offre: ${offerErr.message}`);
-  }
-  return offerId;
+  if (error || !product) throw new Error("Produit introuvable.");
+  return product;
 }
 
 export async function updateOrder(orderId: string, data: {
@@ -50,7 +26,7 @@ export async function updateOrder(orderId: string, data: {
   payout_amount?: number | null;
   status?: string;
   affiliate?: string;   // sous-affilié -> colonne `affiliate`
-  product_id?: string;  // change de produit (re-provisionne l'offre)
+  product_id?: string;  // change de produit
 }) {
   // Isolation : l'affilié ne peut éditer QUE ses propres leads.
   const networkId = await getMyNetworkId();
@@ -67,7 +43,11 @@ export async function updateOrder(orderId: string, data: {
   if (data.payout_amount !== undefined) patch.payout_amount = data.payout_amount;
   if (data.status !== undefined) patch.status = data.status;
   if (data.affiliate !== undefined) patch.affiliate = data.affiliate?.trim() || null;
-  if (data.product_id) patch.offer_id = await ensureOfferForProduct(db, data.product_id);
+  if (data.product_id) {
+    const product = await resolveProduct(db, data.product_id);
+    patch.product_id = product.id;
+    patch.product = product.name;
+  }
 
   const { error } = await db.from("orders").update(patch).eq("id", orderId).eq("affiliate_id", networkId);
 
@@ -105,8 +85,7 @@ export async function createOrder(data: {
   payout_amount?: number;
   comment?: string;
 }) {
-  // Service-role : provisionne l'offre liée au produit puis insère la commande
-  // (la table orders n'a pas de politique d'insertion pour les affiliés).
+  // Service-role : la table orders n'a pas de politique d'insertion pour les affiliés.
   const db = createAdminClient();
 
   // 0) L'affiliate network = le compte affilié connecté (ex. « fgmed »).
@@ -120,17 +99,18 @@ export async function createOrder(data: {
     .maybeSingle();
   if (!network) throw new Error("Aucun affiliate network associé à votre compte.");
 
-  // 1+2) Garantir l'existence d'une offre pour le produit (cible de la FK).
-  const offerId = await ensureOfferForProduct(db, data.product_id);
+  // 1) Résoudre le produit choisi.
+  const product = await resolveProduct(db, data.product_id);
 
-  // 3) Insérer la commande avec un identifiant public numérique.
+  // 2) Insérer la commande avec un identifiant public numérique.
   //    L'« affiliate » (sous-affilié) est stocké en texte libre dans `affiliate`.
   const publicId = await nextOrderPublicId(db);
   const { error } = await db.from("orders").insert([
     {
       public_id: publicId,
       affiliate_id: network.id,
-      offer_id: offerId,
+      product_id: product.id,
+      product: product.name,
       first_name: data.first_name,
       last_name: data.last_name,
       phone: data.phone,

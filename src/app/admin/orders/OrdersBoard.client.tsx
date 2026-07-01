@@ -24,13 +24,12 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
 
   const totalRows = rows.length;
   const filteredRows = rows.filter((o) => {
-    const offers = o.offers as any;
     const affiliates = o.affiliate_network as any;
     const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
     return (
       (!filters.public_id || o.public_id.toLowerCase().includes(filters.public_id.toLowerCase())) &&
-      (!filters.product || (o.product || offers?.product || "").toLowerCase().includes(filters.product.toLowerCase())) &&
+      (!filters.product || (o.product || "").toLowerCase().includes(filters.product.toLowerCase())) &&
       (!filters.country || (o.country || "").toLowerCase().includes(filters.country.toLowerCase())) &&
       (!filters.affiliate_name || (affiliates?.name || "").toLowerCase().includes(filters.affiliate_name.toLowerCase())) &&
       (!filters.status || o.status.toLowerCase().includes(filters.status.toLowerCase())) &&

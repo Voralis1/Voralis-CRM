@@ -22,6 +22,8 @@ create table if not exists project_products (
   daily_capacity int not null default 0,            -- capacité journalière
   confirmation_rate numeric(5,2) not null default 0,-- taux de confirmation (%)
   payout numeric(12,2) not null default 0,
+  payout_model text not null default 'delivered' check (payout_model in ('confirmed', 'delivered')),
+  currency text not null default 'USD',
   status text not null default 'active',
   working_hours text                                -- horaires de travail
 );

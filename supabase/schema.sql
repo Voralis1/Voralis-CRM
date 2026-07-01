@@ -72,21 +72,6 @@ create table if not exists affiliates (
 create index if not exists idx_affiliates_token on affiliates(api_token);
 
 -- ---------------------------------------------------------------------
--- OFFERS
--- ---------------------------------------------------------------------
-create table if not exists offers (
-  id           text primary key,                 -- ex. 'AO-LUMORA-001'
-  name         text not null,
-  product      text,
-  country      char(2) not null,                 -- ISO2
-  payout       numeric(10,2) not null default 0,
-  currency     char(3) not null default 'USD',
-  payout_model payout_model not null default 'delivered',
-  status       text not null default 'active',   -- active | paused
-  created_at   timestamptz not null default now()
-);
-
--- ---------------------------------------------------------------------
 -- ORDERS (le lead de bout en bout) + identifiant public séquentiel
 -- ---------------------------------------------------------------------
 create sequence if not exists order_seq start 1;
@@ -96,7 +81,7 @@ create table if not exists orders (
   public_id      text unique not null
                  default lpad(nextval('order_seq')::text, 6, '0'),
   affiliate_id   uuid not null references affiliates(id) on delete restrict,
-  offer_id       text references offers(id) on delete restrict,  -- facultatif
+  product_id     text references project_products(id) on delete set null, -- facultatif (cf. create_project_tables.sql)
   product        text,                                           -- produit en texte libre
   first_name     text not null,
   last_name      text,
@@ -195,7 +180,6 @@ create trigger trg_orders_status after update of status on orders
 -- =====================================================================
 alter table profiles       enable row level security;
 alter table affiliates     enable row level security;
-alter table offers         enable row level security;
 alter table orders         enable row level security;
 alter table status_history enable row level security;
 alter table postbacks      enable row level security;
@@ -225,13 +209,6 @@ create policy p_aff_update on affiliates for update
   using (auth_user_id = auth.uid() or current_role_name() = 'admin');
 drop policy if exists p_aff_admin_all on affiliates;
 create policy p_aff_admin_all on affiliates for all
-  using (current_role_name() = 'admin') with check (current_role_name() = 'admin');
-
--- offers : lecture par tout authentifié ; écriture admin
-drop policy if exists p_offers_read on offers;
-create policy p_offers_read on offers for select using (auth.uid() is not null);
-drop policy if exists p_offers_admin on offers;
-create policy p_offers_admin on offers for all
   using (current_role_name() = 'admin') with check (current_role_name() = 'admin');
 
 -- orders : affilié voit les siens ; agent/admin voient tout, peuvent éditer

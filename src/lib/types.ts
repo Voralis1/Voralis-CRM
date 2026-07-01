@@ -56,22 +56,11 @@ export type Affiliate = {
   status: string;
 };
 
-export type Offer = {
-  id: string;
-  name: string;
-  product: string | null;
-  country: string;
-  payout: number;
-  currency: string;
-  payout_model: "confirmed" | "delivered";
-  status: string;
-};
-
 export type Order = {
   id: string;
   public_id: string;
   affiliate_id: string;
-  offer_id: string | null;
+  product_id: string | null;
   product: string | null;
   first_name: string;
   last_name: string | null;

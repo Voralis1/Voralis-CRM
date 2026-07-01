@@ -13,9 +13,8 @@ export default async function PanelLeads() {
     .select(`
       id,
       public_id,
-      offer_id,
+      product_id,
       product,
-      offers(product),
       country,
       affiliate_id,
       affiliate_network(name),

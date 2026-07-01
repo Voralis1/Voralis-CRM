@@ -5,10 +5,10 @@ import { z } from "zod";
 export const SUPPORTED_COUNTRIES = ["AO", "ML", "SN", "CI", "GN", "GA", "CG", "MA"] as const;
 
 export const leadSchema = z.object({
-  // Offre facultative : un lead peut être envoyé sans la rattacher à une offre.
-  offer_id: z.string().min(1).optional().nullable(),
   // Produit facultatif : un lead peut être envoyé sans produit précisé.
-  product: z.string().min(1).max(200).optional().nullable(),
+  // On accepte soit l'ID exact du catalogue, soit le nom exact (insensible à la casse).
+  product_id: z.string().min(1).max(200).optional().nullable(),
+  product_name: z.string().min(1).max(200).optional().nullable(),
   first_name: z.string().min(1, "first_name requis").max(120),
   // Nom de famille facultatif.
   last_name: z.string().max(120).optional().nullable(),

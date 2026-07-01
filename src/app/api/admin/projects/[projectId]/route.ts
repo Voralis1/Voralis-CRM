@@ -35,7 +35,7 @@ export async function GET(
   }
 
   // Taux de confirmation calculé automatiquement depuis les leads (orders).
-  const { data: orders } = await db.from("orders").select("status, offer_id, product");
+  const { data: orders } = await db.from("orders").select("status, product_id, product");
   const allOrders = (orders ?? []) as any[];
 
   return NextResponse.json({

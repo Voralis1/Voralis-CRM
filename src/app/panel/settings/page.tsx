@@ -72,10 +72,11 @@ export default async function PanelSettings() {
             <div className="text-sm font-medium text-ink">{t("aff.settings.minPayload")}</div>
             <div className="mt-2 rounded bg-base p-3 text-[11px] text-ink font-mono overflow-x-auto border border-line">
               {`{
-  "offer_id": "offer_123",
   "first_name": "Jean",
   "phone": "+221770000000",
-  "country": "SN"
+  "country": "SN",
+  "quantity": 1,
+  "affiliate": "3379"
 }`}
             </div>
           </div>
@@ -83,10 +84,11 @@ export default async function PanelSettings() {
           <div>
             <div className="text-sm font-medium text-ink">{t("aff.settings.optionalFields")}</div>
             <ul className="mt-2 list-disc pl-5 text-sm text-ink-muted">
+              <li><code>product_id</code> (ID du catalogue produits, prioritaire sur product_name)</li>
+              <li><code>product_name</code> (nom exact du produit)</li>
               <li><code>last_name</code></li>
               <li><code>address</code></li>
               <li><code>city</code></li>
-              <li><code>quantity</code></li>
               <li><code>ip</code></li>
               <li><code>user_agent</code></li>
               <li><code>sub3</code> ... <code>sub5</code></li>
@@ -119,7 +121,7 @@ export default async function PanelSettings() {
   -H "Authorization: Bearer ${aff?.api_token ?? "<API_TOKEN>"}" \
   -H "Content-Type: application/json" \
   -d '{
-    "offer_id":"offer_123",
+    "product_id":"218022",
     "first_name":"Jean",
     "last_name":"Dupont",
     "phone":"+221770000000",
@@ -141,7 +143,7 @@ export default async function PanelSettings() {
         <h2 className="text-base font-semibold text-ink">{t("aff.settings.postbackTitle")}</h2>
         <p className="mb-3 mt-1 text-sm text-ink-muted">
           {t("aff.settings.macrosLabel")} <code className="font-mono text-xs">
-          {"{lead_id} {status} {payout} {currency} {offer_id} {country} {affiliate} {sub3}…{sub5} {timestamp}"}</code>
+          {"{lead_id} {status} {payout} {currency} {product_id} {country} {affiliate} {sub3}…{sub5} {timestamp}"}</code>
         </p>
         <form action={savePostback} className="space-y-3">
           <input
@@ -167,7 +169,7 @@ export default async function PanelSettings() {
         <h2 className="text-base font-semibold text-ink">{t("aff.settings.endpointsTitle")}</h2>
         <div className="mt-3 space-y-2 font-mono text-xs">
           <div className="rounded bg-elevated px-3 py-2 text-ink">POST&nbsp;&nbsp;{base || "https://example.com"}/api/v1/leads</div>
-          <div className="rounded bg-elevated px-3 py-2 text-ink">GET&nbsp;&nbsp;&nbsp;{base || "https://example.com"}/api/v1/offers</div>
+          <div className="rounded bg-elevated px-3 py-2 text-ink">GET&nbsp;&nbsp;&nbsp;{base || "https://example.com"}/api/v1/leads/{"{lead_id}"}</div>
         </div>
       </section>
     </div>

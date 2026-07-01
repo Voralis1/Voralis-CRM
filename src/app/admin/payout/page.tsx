@@ -21,7 +21,7 @@ export default async function AdminPayoutPage() {
   // Leads confirmés non encore payés.
   const { data: orders } = await db
     .from("orders")
-    .select("affiliate_id, status, product, offer_id, paid_at")
+    .select("affiliate_id, status, product, product_id, paid_at")
     .in("status", CONFIRMED)
     .is("paid_at", null);
 
@@ -34,7 +34,7 @@ export default async function AdminPayoutPage() {
     payoutByName.set(norm(p.name), Number(p.payout ?? 0));
   }
   const leadPayout = (o: any): number => {
-    if (o.offer_id && payoutById.has(o.offer_id)) return payoutById.get(o.offer_id)!;
+    if (o.product_id && payoutById.has(o.product_id)) return payoutById.get(o.product_id)!;
     return payoutByName.get(norm(o.product)) ?? 0;
   };
 
