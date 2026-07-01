@@ -1,0 +1,291 @@
+# VORALIS · TECHNICAL DOCUMENTATION
+
+## API Integration Guide — Affiliates
+
+This guide explains how to **send your leads**, **track their statuses** and **receive updates** (postbacks) on the VORALIS platform.
+
+| Parameter | Value |
+|---|---|
+| Base URL | `https://www.voralisnatural.com` (replace with the URL provided to you) |
+| Format | JSON (UTF-8) |
+| Authentication | Your personal **API token**, in the `Authorization` header |
+
+> Your token is available in your dashboard, under the **"API & Postback"** tab. Never share it publicly.
+
+---
+
+## 1. Authentication
+
+Every request must include your token in the HTTP header:
+
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+An invalid token returns `401`. A suspended account returns `403`.
+
+---
+
+## 2. Send a lead
+
+**`POST /api/v1/leads`**
+
+Headers:
+```
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+```
+
+### Fields
+
+| Field | Required | Type | Rule / example |
+|---|:---:|---|---|
+| `first_name` | ✓ | text | First name. Max 120 |
+| `phone` | ✓ | text | 6 to 20 characters. Digits, `+ ( ) - . space` |
+| `country` | ✓ | text | 2–3 letter country code (e.g. `SN`, `CI`, `GN`, `AGO`) |
+| `quantity` | ✓ | integer | 1 to 99 |
+| `affiliate` | ✓ | text | Your sub-affiliate / source ID (e.g. `fb_camp_12`). Max 255 |
+| `product` | — | text | Exact product name (or product ID). Max 200 |
+| `last_name` | — | text | Last name. Max 120 |
+| `address` | — | text | Address. Max 300 |
+| `city` | — | text | City. Max 120 |
+| `offer_id` | — | text | Offer ID (optional) |
+| `ip` | — | text | Client IP. Max 60 |
+| `user_agent` | — | text | Client user-agent. Max 400 |
+| `sub3`, `sub4`, `sub5` | — | text | Free tracking parameters. Max 255 |
+| `comment` | — | text | Internal note. Max 1000 |
+
+> `product`, `last_name`, `address` and `city` are optional: a lead can be sent without them. When provided, the same length/format limits above still apply.
+
+### Country codes (VORALIS abbreviations)
+
+The `country` field accepts a **2 to 3 letter** code. Preferably use the abbreviations below: they are recognized by the platform and determine the **currency** displayed.
+
+| Code | Country | Currency |
+|---|---|---|
+| `SN` | Senegal | FCFA (XOF) |
+| `CI` | Ivory Coast | FCFA (XOF) |
+| `ML` | Mali | FCFA (XOF) |
+| `BF` | Burkina Faso | FCFA (XOF) |
+| `TG` | Togo | FCFA (XOF) |
+| `GN` | Guinea | GNF |
+| `GAB` | Gabon | FCFA (XAF) |
+| `BZV` | Congo-Brazzaville | FCFA (XAF) |
+| `AGO` | Angola | Kz (Kwanza) |
+| `NG` | Nigeria | ₦ (Naira) |
+
+> Other 2–3 letter codes are still accepted, but the currency will not be displayed automatically if the code isn't in this list.
+
+### Example (cURL) — full payload
+
+```bash
+curl -X POST https://www.voralisnatural.com/api/v1/leads \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "product": "Lumora",
+    "first_name": "Joao",
+    "last_name": "Silva",
+    "phone": "+244923000000",
+    "country": "AGO",
+    "address": "Rua 1, Bairro Central",
+    "city": "Luanda",
+    "quantity": 1,
+    "affiliate": "fb_camp_12",
+    "sub3": "adset_45",
+    "comment": "Customer called back in the evening"
+  }'
+```
+
+### Example (cURL) — minimal payload (required fields only)
+
+```bash
+curl -X POST https://www.voralisnatural.com/api/v1/leads \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Joao",
+    "phone": "+244923000000",
+    "country": "AGO",
+    "quantity": 1,
+    "affiliate": "fb_camp_12"
+  }'
+```
+
+### Success response — `201 Created`
+
+```json
+{
+  "success": true,
+  "lead_id": "000123",
+  "status": "new",
+  "message": "Lead received successfully"
+}
+```
+
+> Keep the `lead_id`: it identifies the lead for tracking and appears in postbacks (`{lead_id}`).
+
+---
+
+## 3. Check a lead's status
+
+**`GET /api/v1/leads/{lead_id}`**
+
+```bash
+curl https://www.voralisnatural.com/api/v1/leads/000123 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response — `200 OK`
+
+```json
+{
+  "public_id": "000123",
+  "offer_id": "AO-LUMORA-001",
+  "status": "confirmed",
+  "status_label": "Confirmed",
+  "country": "AGO",
+  "created_at": "2026-06-30T10:15:00Z",
+  "updated_at": "2026-06-30T12:40:00Z",
+  "affiliate": "fb_camp_12",
+  "sub3": "adset_45",
+  "payout_amount": 6.00,
+  "payout_currency": "USD"
+}
+```
+
+Unknown lead → `404`.
+
+---
+
+## 4. List available offers
+
+**`GET /api/v1/offers`**
+
+```bash
+curl https://www.voralisnatural.com/api/v1/offers \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response — `200 OK`
+
+```json
+{
+  "offers": [
+    {
+      "id": "AO-LUMORA-001",
+      "name": "Lumora Angola",
+      "country": "AGO",
+      "payout": 6.00,
+      "currency": "USD",
+      "payout_model": "confirmed",
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
+## 5. Lead statuses
+
+A lead progresses through several stages as it is processed. Possible statuses:
+
+| Status | Meaning |
+|---|---|
+| `new` | New — received |
+| `duplicate` | Duplicate |
+| `trash` | Invalid |
+| `processing` | Being processed (call center) |
+| `no_answer` | Unreachable |
+| `callback` | Callback scheduled |
+| `confirmed` | **Confirmed** |
+| `test_confirmed` | Confirmed (test) |
+| `rejected` | Cancelled by customer |
+| `shipped` | Shipped |
+| `in_delivery` | Out for delivery |
+| `delivered` | **Delivered** |
+| `returned` | Returned |
+| `cancelled` | Cancelled |
+
+> The commission (**payout**) is owed once the offer reaches its billable status (`confirmed` or `delivered`, depending on the offer).
+
+---
+
+## 6. Postbacks (automatic updates)
+
+On every status change, VORALIS automatically calls your tracker URL to notify you. Configure this URL in your dashboard, under the **"API & Postback"** tab.
+
+### Macros available in the URL
+
+| Macro | Value |
+|---|---|
+| `{lead_id}` | Lead ID (e.g. `000123`) |
+| `{status}` | Status (e.g. `confirmed`) |
+| `{status_label}` | Status label |
+| `{offer_id}` | Offer ID |
+| `{country}` | Country |
+| `{payout}` | Commission amount (`0` if not billable) |
+| `{currency}` | Payout currency |
+| `{quantity}` | Quantity |
+| `{comment}` | Comment |
+| `{affiliate}` | Your sub-affiliate ID |
+| `{sub3}` `{sub4}` `{sub5}` | Your tracking parameters |
+| `{timestamp}` | ISO 8601 date/time |
+
+### Example postback URL
+
+```
+https://your-tracker.com/postback?clickid={sub3}&status={status}&payout={payout}&leadid={lead_id}
+```
+
+### GET or POST method
+
+- **GET** (default): macros are inserted directly into the URL (values are encoded).
+- **POST**: the body is sent as JSON, **signed** via the `X-Voralis-Signature` header (HMAC-SHA256 of the body using your **signing secret**, shown in your dashboard). This lets you verify the authenticity of the call.
+
+---
+
+## 7. Response codes
+
+| Code | Meaning |
+|---|---|
+| `201` | Lead created successfully |
+| `200` | Request succeeded (lookup) |
+| `400` | Invalid JSON or non-compliant fields (see `details`) |
+| `401` | Missing or invalid token |
+| `403` | Unknown/inactive offer **or** suspended affiliate account |
+| `409` | Duplicate (same phone number already sent recently) |
+| `500` | Server error — please retry later |
+
+### Error format
+
+```json
+{
+  "success": false,
+  "error_code": "VALIDATION",
+  "message": "Error description",
+  "details": { "field": "reason" }
+}
+```
+
+Error codes: `AUTH`, `VALIDATION`, `BAD_JSON`, `OFFER_NOT_FOUND`, `DUPLICATE_LEAD`, `SERVER`.
+
+---
+
+## 8. Important rules
+
+- **Duplicate prevention:** a lead with the **same phone number** submitted within the last **30 days** is rejected (`409`). Filter on your end to avoid rejections.
+- **Phone number:** prefer the **international format** (e.g. `+221770000000`) for better reachability.
+- **`affiliate`:** use a stable identifier per campaign/source — it's used to segment your stats and is returned in postbacks.
+- **Security:** keep your token secret. If it's ever leaked, regenerate it from your dashboard (the old one becomes invalid immediately).
+
+---
+
+## 9. Support
+
+For any integration questions (token, offers, postbacks), contact your VORALIS account manager.
+
+---
+
+*Voralis · API Integration Guide for Affiliates · Internal document, do not distribute publicly*

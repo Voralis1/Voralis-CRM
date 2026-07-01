@@ -9,8 +9,13 @@ export default async function OffersAdmin() {
     .from("offers")
     .select("*")
     .order("country", { ascending: true });
+  const { data: products } = await supabase
+    .from("project_products")
+    .select("id, name, projects(name)")
+    .order("name", { ascending: true });
 
   const rows = offers ?? [];
+  const productRows = products ?? [];
 
   return (
     <div className="space-y-6">
@@ -51,9 +56,18 @@ export default async function OffersAdmin() {
       <section className="card p-6">
         <h2 className="mb-4 text-base font-semibold text-ink">{t("adm.offers.newOffer")}</h2>
         <form action={createOffer} className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <div><label className="label">{t("adm.offers.labelId")}</label><input className="input" name="id" placeholder="AO-LUMORA-001" required /></div>
+          <div>
+            <label className="label">{t("adm.offers.labelProduct")}</label>
+            <select className="input" name="productId" required defaultValue="">
+              <option value="" disabled>{t("adm.offers.selectProduct")}</option>
+              {productRows.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} — {p.projects?.name ?? p.id}
+                </option>
+              ))}
+            </select>
+          </div>
           <div><label className="label">{t("adm.offers.labelName")}</label><input className="input" name="name" required /></div>
-          <div><label className="label">{t("adm.offers.labelProduct")}</label><input className="input" name="product" /></div>
           <div><label className="label">{t("adm.offers.labelCountry")}</label><input className="input" name="country" maxLength={2} placeholder={t("adm.offers.phCountry")} required /></div>
           <div><label className="label">{t("adm.offers.labelPayout")}</label><input className="input" name="payout" type="number" step="0.01" required /></div>
           <div><label className="label">{t("adm.offers.labelCurrency")}</label><input className="input" name="currency" defaultValue="USD" maxLength={3} /></div>
