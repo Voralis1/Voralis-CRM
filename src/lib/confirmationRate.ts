@@ -20,3 +20,23 @@ export function confirmationRateFor(
   const confirmed = related.filter((o) => CONFIRMED.has(o.status)).length;
   return valid > 0 ? Math.round((confirmed / valid) * 1000) / 10 : 0;
 }
+
+// Variante utilisée sur les pages produits de l'espace affilié : taux =
+// confirmées / (confirmées + annulées). Mêmes groupes de statut que les
+// statistiques admin (cf. STATUS_GROUPS "approved"/"canceled").
+const CONFIRMED_ONLY = new Set(["confirmed"]);
+const CANCELLED_ONLY = new Set(["cancelled", "rejected"]);
+
+export function affiliateConfirmationRateFor(
+  product: { id: string; name: string },
+  orders: RateOrder[]
+): number {
+  const pName = norm(product.name);
+  const related = orders.filter(
+    (o) => o.product_id === product.id || (o.product && norm(o.product) === pName)
+  );
+  const confirmed = related.filter((o) => CONFIRMED_ONLY.has(o.status)).length;
+  const cancelled = related.filter((o) => CANCELLED_ONLY.has(o.status)).length;
+  const denom = confirmed + cancelled;
+  return denom > 0 ? Math.round((confirmed / denom) * 1000) / 10 : 0;
+}

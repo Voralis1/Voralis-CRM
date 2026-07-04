@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { confirmationRateFor, type RateOrder } from "@/lib/confirmationRate";
+import { affiliateConfirmationRateFor, type RateOrder } from "@/lib/confirmationRate";
 import { formatProductPrice, formatPayout, currencyForCountry } from "@/lib/currency";
 import DownloadButton from "./DownloadButton.client";
 import DownloadJsonButton from "./DownloadJsonButton.client";
@@ -42,7 +42,7 @@ export default async function PanelProductsPage() {
   const allOrders = (orders ?? []) as RateOrder[];
 
   // Taux calculé une seule fois -> réutilisé par le tableau ET le CSV.
-  const enriched = products.map((p) => ({ p, rate: confirmationRateFor(p, allOrders) }));
+  const enriched = products.map((p) => ({ p, rate: affiliateConfirmationRateFor(p, allOrders) }));
 
   const csvHeaders = [
     t("aff.products.csvId"), t("aff.products.csvName"), t("aff.products.csvCategory"), t("aff.products.csvCountry"), t("aff.products.csvPrice"),

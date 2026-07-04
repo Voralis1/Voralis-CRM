@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { confirmationRateFor, type RateOrder } from "@/lib/confirmationRate";
+import { affiliateConfirmationRateFor, type RateOrder } from "@/lib/confirmationRate";
 import { formatProductPrice, formatPayout } from "@/lib/currency";
 import KpiCard from "@/components/KpiCard";
 import { Icon } from "@/components/icons";
@@ -36,7 +36,7 @@ export default async function PanelProductDetail({ params }: { params: { product
   // Taux de confirmation global (agrégat de tous les leads, sans données perso).
   const admin = createAdminClient();
   const { data: orders } = await admin.from("orders").select("status, product_id, product");
-  const rate = confirmationRateFor(product as any, (orders ?? []) as RateOrder[]);
+  const rate = affiliateConfirmationRateFor(product as any, (orders ?? []) as RateOrder[]);
 
   const status = product.status || "active";
   const statusClass =

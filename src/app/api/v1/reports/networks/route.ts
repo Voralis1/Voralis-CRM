@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canonicalCountry } from "@/lib/currency";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
   if (netErr) return NextResponse.json({ success: false, error_code: "DB", message: netErr.message }, { status: 500 });
   if (affErr) return NextResponse.json({ success: false, error_code: "DB", message: affErr.message }, { status: 500 });
 
-  let ordersQuery = db.from("orders").select("affiliate_id, affiliate, status, payout_amount, created_at");
+  let ordersQuery = db.from("orders").select("affiliate_id, affiliate, status, payout_amount, country, created_at");
   if (from) ordersQuery = ordersQuery.gte("created_at", from);
   if (to) ordersQuery = ordersQuery.lte("created_at", `${to}T23:59:59`);
   const { data: orders, error: ordErr } = await ordersQuery;
@@ -50,13 +51,16 @@ export async function GET(req: Request) {
 
   const statsByNetwork = new Map<string, Stats>();
   const statsByAffiliateKey = new Map<string, Stats>(); // clé = `${network_id}|${affiliate_name}`
+  const statsByCountry = new Map<string, Stats>();
 
   for (const o of orders ?? []) {
     const netStats = statsByNetwork.get(o.affiliate_id) ?? emptyStats();
     const affKey = `${o.affiliate_id}|${(o.affiliate ?? "").trim()}`;
     const affStats = statsByAffiliateKey.get(affKey) ?? emptyStats();
+    const country = canonicalCountry(o.country) || "UNKNOWN";
+    const countryStats = statsByCountry.get(country) ?? emptyStats();
 
-    for (const s of [netStats, affStats]) {
+    for (const s of [netStats, affStats, countryStats]) {
       s.total_orders += 1;
       if (CONFIRMED.has(o.status)) s.confirmed_orders += 1;
       if (DELIVERED.has(o.status)) {
@@ -66,6 +70,7 @@ export async function GET(req: Request) {
     }
     statsByNetwork.set(o.affiliate_id, netStats);
     statsByAffiliateKey.set(affKey, affStats);
+    statsByCountry.set(country, countryStats);
   }
 
   const result = (networks ?? []).map((n) => ({
@@ -87,6 +92,10 @@ export async function GET(req: Request) {
 
   const totalConfirmedOrders = (orders ?? []).filter((o) => CONFIRMED.has(o.status)).length;
 
+  const byCountry = Array.from(statsByCountry.entries())
+    .map(([country, stats]) => ({ country, stats }))
+    .sort((a, b) => b.stats.total_payout - a.stats.total_payout);
+
   return NextResponse.json({
     success: true,
     generated_at: new Date().toISOString(),
@@ -104,5 +113,7 @@ export async function GET(req: Request) {
       confirmed_orders: totalConfirmedOrders,
     },
     networks: result,
+    // Payout agrégé par pays (payout toujours en dollars, cf. formatPayout).
+    by_country: byCountry,
   });
 }

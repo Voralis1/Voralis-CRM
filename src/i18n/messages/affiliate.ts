@@ -71,6 +71,16 @@ export const affiliate: Record<string, Record<string, any>> = {
         colAction: "Action",
         empty: "Aucun lead pour le moment.",
       },
+      topOffers: {
+        title: "Meilleures offres",
+        subtitle: "Les 3 produits actifs avec le meilleur taux de confirmation.",
+        empty: "Pas encore assez de données pour classer les offres.",
+        colProduct: "Produit",
+        colCountry: "Pays",
+        colPrice: "Prix",
+        colPayout: "Payout",
+        colConfRate: "Taux de confirmation",
+      },
       products: {
         title: "Produits",
         subtitle:
@@ -262,6 +272,16 @@ export const affiliate: Record<string, Record<string, any>> = {
         colExtraInfo: "Additional information",
         colAction: "Action",
         empty: "No leads yet.",
+      },
+      topOffers: {
+        title: "Best offers",
+        subtitle: "The 3 active products with the highest confirmation rate.",
+        empty: "Not enough data yet to rank the offers.",
+        colProduct: "Product",
+        colCountry: "Country",
+        colPrice: "Price",
+        colPayout: "Payout",
+        colConfRate: "Confirmation rate",
       },
       products: {
         title: "Products",
@@ -455,6 +475,16 @@ export const affiliate: Record<string, Record<string, any>> = {
         colAction: "Ação",
         empty: "Nenhum lead por enquanto.",
       },
+      topOffers: {
+        title: "Melhores ofertas",
+        subtitle: "Os 3 produtos ativos com a melhor taxa de confirmação.",
+        empty: "Ainda não há dados suficientes para classificar as ofertas.",
+        colProduct: "Produto",
+        colCountry: "País",
+        colPrice: "Preço",
+        colPayout: "Payout",
+        colConfRate: "Taxa de confirmação",
+      },
       products: {
         title: "Produtos",
         subtitle:
@@ -646,6 +676,16 @@ export const affiliate: Record<string, Record<string, any>> = {
         colExtraInfo: "Дополнительная информация",
         colAction: "Действие",
         empty: "Пока нет лидов.",
+      },
+      topOffers: {
+        title: "Лучшие предложения",
+        subtitle: "3 активных продукта с самым высоким процентом подтверждения.",
+        empty: "Пока недостаточно данных для ранжирования предложений.",
+        colProduct: "Продукт",
+        colCountry: "Страна",
+        colPrice: "Цена",
+        colPayout: "Выплата",
+        colConfRate: "Процент подтверждения",
       },
       products: {
         title: "Продукты",
