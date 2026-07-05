@@ -62,11 +62,13 @@ export async function GET(req: Request) {
 
     for (const s of [netStats, affStats, countryStats]) {
       s.total_orders += 1;
-      if (CONFIRMED.has(o.status)) s.confirmed_orders += 1;
-      if (DELIVERED.has(o.status)) {
-        s.delivered_orders += 1;
+      // Payout dû dès "confirmed" (cf. project_products.payout_model et
+      // /admin/payout), pas seulement à "delivered".
+      if (CONFIRMED.has(o.status)) {
+        s.confirmed_orders += 1;
         s.total_payout += Number(o.payout_amount) || 0;
       }
+      if (DELIVERED.has(o.status)) s.delivered_orders += 1;
     }
     statsByNetwork.set(o.affiliate_id, netStats);
     statsByAffiliateKey.set(affKey, affStats);
