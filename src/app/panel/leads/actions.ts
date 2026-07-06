@@ -159,7 +159,7 @@ export async function fetchProducts() {
 
   const { data, error } = await supabase
     .from("project_products")
-    .select("id, name, price, country")
+    .select("id, name, payout, country")
     .order("created_at", { ascending: false });
 
   if (error) {

@@ -3,7 +3,7 @@
 import { STATUS_META, type OrderStatus, ALL_STATUSES } from "@/lib/types";
 import { useState } from "react";
 import { updateOrder, createOrder, deleteOrder, fetchProducts } from "./actions";
-import { formatProductPrice } from "@/lib/currency";
+import { formatPayout } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
 
 interface LeadsTableProps {
@@ -13,7 +13,7 @@ interface LeadsTableProps {
 interface Product {
   id: string;
   name: string;
-  price: number | null;
+  payout: number | null;
   country: string | null;
 }
 
@@ -49,7 +49,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
         t("aff.leads.colAffiliate"),
         t("aff.leads.colReceivedDate"),
         t("aff.leads.labelStatus"),
-        t("aff.leads.colPrice"),
+        t("aff.leads.colPayout"),
         t("aff.leads.colFullName"),
         t("aff.leads.colPhone"),
         t("aff.leads.colAddress"),
@@ -68,7 +68,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           o.affiliate ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
           meta?.label ?? o.status,
-          o.payout_amount != null ? formatProductPrice(o.payout_amount, o.country) : "",
+          o.payout_amount != null ? formatPayout(o.payout_amount) : "",
           fullName,
           o.phone,
           o.address ?? "",
@@ -225,10 +225,10 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                       setCreateData({
                         ...createData,
                         product_id: e.target.value,
-                        // Pré-remplit le prix avec celui du produit choisi.
+                        // Pré-remplit le payout (en dollars) avec celui du produit choisi.
                         payout_amount:
-                          selected?.price != null
-                            ? String(selected.price)
+                          selected?.payout != null
+                            ? String(selected.payout)
                             : createData.payout_amount,
                       });
                     }}
@@ -239,7 +239,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                       <option key={product.id} value={product.id}>
                         {product.name}
                         {product.country ? ` — ${product.country}` : ""}
-                        {product.price != null ? ` (${Number(product.price).toFixed(2)} €)` : ""}
+                        {product.payout != null ? ` (${formatPayout(product.payout)})` : ""}
                       </option>
                     ))}
                   </select>
@@ -341,7 +341,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                 </div>
 
                 <div>
-                  <label className="label">{t("aff.leads.labelPrice")}</label>
+                  <label className="label">{t("aff.leads.labelPayout")}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -523,7 +523,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
               </div>
 
               <div>
-                <label className="label">{t("aff.leads.labelPrice")}</label>
+                <label className="label">{t("aff.leads.labelPayout")}</label>
                 <input
                   type="number"
                   step="0.01"
@@ -599,7 +599,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
               <th className="th">{t("aff.leads.colAffiliate")}</th>
               <th className="th">{t("aff.leads.colReceivedDate")}</th>
               <th className="th">{t("aff.leads.colLastStatus")}</th>
-              <th className="th">{t("aff.leads.colPrice")}</th>
+              <th className="th">{t("aff.leads.colPayout")}</th>
               <th className="th">{t("aff.leads.colFullName")}</th>
               <th className="th">{t("aff.leads.colPhone")}</th>
               <th className="th">{t("aff.leads.colAddress")}</th>
@@ -632,7 +632,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                   </td>
                   <td className="td">
                     {o.payout_amount != null
-                      ? formatProductPrice(o.payout_amount, o.country)
+                      ? formatPayout(o.payout_amount)
                       : "—"}
                   </td>
                   <td className="td">{fullName}</td>

@@ -33,9 +33,10 @@ export async function ingestLead(
 
   // 3a) Produit : l'affilié peut envoyer product_id (recommandé, plus fiable)
   //     OU product_name (nom exact, insensible à la casse). product_id est
-  //     prioritaire si les deux sont fournis. Le prix est récupéré du produit
-  //     trouvé. Aucune correspondance -> on garde la valeur reçue en texte
-  //     libre (colonne `product`) et product_id reste vide (contrainte FK).
+  //     prioritaire si les deux sont fournis. La commission (payout, toujours
+  //     en dollars) est récupérée du produit trouvé. Aucune correspondance ->
+  //     on garde la valeur reçue en texte libre (colonne `product`) et
+  //     product_id reste vide (contrainte FK).
   let payoutAmount: number | null = null;
   let payoutCurrency: string | null = null;
   let productName: string | null = null;
@@ -43,13 +44,13 @@ export async function ingestLead(
 
   if (lead.product_id) {
     const prod = (
-      await db.from("project_products").select("id, name, price").eq("id", lead.product_id).maybeSingle()
+      await db.from("project_products").select("id, name, payout").eq("id", lead.product_id).maybeSingle()
     ).data;
     if (prod) {
       productId = prod.id;
       productName = prod.name;
-      if (prod.price != null) {
-        payoutAmount = Number(prod.price);
+      if (prod.payout != null) {
+        payoutAmount = Number(prod.payout);
         payoutCurrency = "USD";
       }
     } else {
@@ -57,13 +58,13 @@ export async function ingestLead(
     }
   } else if (lead.product_name) {
     const prod = (
-      await db.from("project_products").select("id, name, price").ilike("name", lead.product_name).maybeSingle()
+      await db.from("project_products").select("id, name, payout").ilike("name", lead.product_name).maybeSingle()
     ).data;
     if (prod) {
       productId = prod.id;
       productName = prod.name;
-      if (prod.price != null) {
-        payoutAmount = Number(prod.price);
+      if (prod.payout != null) {
+        payoutAmount = Number(prod.payout);
         payoutCurrency = "USD";
       }
     } else {
