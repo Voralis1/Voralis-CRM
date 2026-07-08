@@ -14,6 +14,7 @@ interface Product {
   country: string;
   price: string;
   dailyCapacity: string;
+  quantity: string;
   confirmationRate: string;
   payout: string;
   status: string;
@@ -179,6 +180,7 @@ export default function ProductDetailPage({
               [t("adm.products.price"), product.price ? formatProductPrice(product.price, product.country) : "—"],
               [t("adm.products.kpiPayout"), product.payout ? formatPayout(product.payout) : "—"],
               [t("adm.products.dailyCapacity"), product.dailyCapacity || "—"],
+              [t("adm.products.quantity"), product.quantity || "—"],
               [t("adm.products.workingHours"), product.workingHours || "—"],
             ].map(([label, value]) => (
               <div key={label} className="border-b border-line pb-3">

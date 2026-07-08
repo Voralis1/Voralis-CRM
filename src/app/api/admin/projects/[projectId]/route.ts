@@ -24,7 +24,7 @@ export async function GET(
   const { data: products, error: productsError } = await db
     .from("project_products")
     .select(
-      "id, created_at, name, description, price, country, category, daily_capacity, confirmation_rate, payout, status, working_hours, image_url"
+      "id, created_at, name, description, price, country, category, daily_capacity, quantity, confirmation_rate, payout, status, working_hours, image_url"
     )
     .eq("project_id", projectId)
     .order("created_at", { ascending: false })
@@ -53,6 +53,7 @@ export async function GET(
       country: product.country ?? "",
       price: product.price != null ? String(product.price) : "",
       dailyCapacity: String(product.daily_capacity ?? 0),
+      quantity: String(product.quantity ?? 0),
       confirmationRate: String(confirmationRateFor(product, allOrders)), // calculé, non saisi
       payout: product.payout != null ? String(product.payout) : "",
       status: product.status ?? "active",

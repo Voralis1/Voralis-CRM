@@ -11,7 +11,7 @@ export async function PUT(
   const body = await req.json();
   const {
     name, price, category, country,
-    dailyCapacity, payout, status, workingHours, additionalInfo, imageUrl,
+    dailyCapacity, quantity, payout, status, workingHours, additionalInfo, imageUrl,
   } = body;
 
   if (!name || price === undefined || price === "") {
@@ -29,6 +29,7 @@ export async function PUT(
       country: country || null,
       category: category || null,
       daily_capacity: Number(dailyCapacity) || 0,
+      quantity: Number(quantity) || 0,
       payout: Number(payout) || 0,
       status: status || "active",
       working_hours: workingHours || null,

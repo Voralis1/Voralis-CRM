@@ -12,6 +12,7 @@ interface Product {
   country: string;
   price: string;
   dailyCapacity: string;
+  quantity: string;
   confirmationRate: string;
   payout: string;
   status: string;
@@ -41,6 +42,7 @@ const initialProductForm: Product = {
   country: "",
   price: "",
   dailyCapacity: "",
+  quantity: "",
   confirmationRate: "",
   payout: "",
   status: "active",
@@ -154,12 +156,12 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
     }
     const headers = [
       t("adm.products.csvId"), t("adm.products.csvName"), t("adm.products.csvCategory"), t("adm.products.csvCountry"), t("adm.products.csvPrice"),
-      t("adm.products.csvCapacity"), t("adm.products.csvConfirmationRate"), t("adm.products.csvPayout"), t("adm.products.csvStatus"),
+      t("adm.products.csvCapacity"), t("adm.products.csvQuantity"), t("adm.products.csvConfirmationRate"), t("adm.products.csvPayout"), t("adm.products.csvStatus"),
       t("adm.products.csvHours"), t("adm.products.csvExtra"),
     ];
     const rows = products.map((p) => [
       p.id, p.name, p.category, p.country, p.price,
-      p.dailyCapacity, p.confirmationRate, p.payout, p.status,
+      p.dailyCapacity, p.quantity, p.confirmationRate, p.payout, p.status,
       p.workingHours, p.additionalInfo,
     ]);
     const csv = [headers, ...rows].map((row) => row.map((val) => `"${val ?? ""}"`).join(",")).join("\n");
@@ -198,6 +200,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
           country: form.country,
           price: form.price,
           dailyCapacity: form.dailyCapacity,
+          quantity: form.quantity,
           payout: form.payout,
           status: form.status,
           workingHours: form.workingHours,
@@ -341,6 +344,10 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
                   <input type="number" min="0" value={form.dailyCapacity} onChange={(e) => handleChange("dailyCapacity", e.target.value)} className="input w-full" placeholder={t("adm.products.phCapacity")} />
                 </label>
                 <label className="space-y-2 text-sm">
+                  <span>{t("adm.products.quantity")}</span>
+                  <input type="number" min="0" value={form.quantity} onChange={(e) => handleChange("quantity", e.target.value)} className="input w-full" placeholder={t("adm.products.phQuantity")} />
+                </label>
+                <label className="space-y-2 text-sm">
                   <span>{t("adm.products.payoutDollar")}</span>
                   <input type="number" min="0" step="0.01" value={form.payout} onChange={(e) => handleChange("payout", e.target.value)} className="input w-full" placeholder={t("adm.products.phPayout")} />
                 </label>
@@ -388,6 +395,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
               <th className="th">{t("adm.products.country")}</th>
               <th className="th">{t("adm.products.price")}</th>
               <th className="th">{t("adm.products.dailyCapacity")}</th>
+              <th className="th">{t("adm.products.quantity")}</th>
               <th className="th">{t("adm.products.colConfirmationRate")}</th>
               <th className="th">{t("adm.products.payoutDollar")}</th>
               <th className="th">{t("adm.products.status")}</th>
@@ -399,7 +407,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td className="td text-center text-ink-muted" colSpan={13}>
+                <td className="td text-center text-ink-muted" colSpan={14}>
                   {t("adm.products.emptyProducts")}
                 </td>
               </tr>
@@ -427,6 +435,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
                   <td className="td">{product.country || "—"}</td>
                   <td className="td">{product.price ? formatProductPrice(product.price, product.country) : "—"}</td>
                   <td className="td">{product.dailyCapacity || "—"}</td>
+                  <td className="td">{product.quantity || "—"}</td>
                   <td className="td">{product.confirmationRate ? `${product.confirmationRate}%` : "—"}</td>
                   <td className="td">{product.payout ? formatPayout(product.payout) : "—"}</td>
                   <td className="td">

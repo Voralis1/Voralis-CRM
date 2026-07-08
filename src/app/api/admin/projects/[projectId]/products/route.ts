@@ -11,7 +11,7 @@ export async function POST(
   const body = await req.json();
   const {
     id, name, price, category, country,
-    dailyCapacity, payout, status, workingHours, additionalInfo, createdAt, imageUrl,
+    dailyCapacity, quantity, payout, status, workingHours, additionalInfo, createdAt, imageUrl,
   } = body;
 
   if (!id || !name || price === undefined || price === "") {
@@ -35,6 +35,7 @@ export async function POST(
     country: country || null,
     category: category || null,
     daily_capacity: Number(dailyCapacity) || 0,
+    quantity: Number(quantity) || 0,
     payout: Number(payout) || 0,
     status: status || "active",
     working_hours: workingHours || null,
