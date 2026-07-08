@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { authenticateAffiliate } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -8,20 +7,26 @@ export const runtime = "nodejs";
 // GET /api/v1/products/stock
 //
 // Renvoie la quantité en stock de chaque produit (tous projets confondus).
-// Auth : Bearer <token affilié>, même mécanisme que /api/v1/leads.
+// Protégé par REPORTING_API_KEY : header "Authorization: Bearer <clé>",
+// même mécanisme que /api/v1/reports/networks.
 //
 // Query params optionnels :
 //   - product_id : ne renvoyer que ce produit
 //   - project_id : filtrer sur un projet donné
 // ---------------------------------------------------------------------------
 
+function checkAuth(req: Request): boolean {
+  const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  return !!process.env.REPORTING_API_KEY && bearer === process.env.REPORTING_API_KEY;
+}
+
 export async function GET(req: Request) {
-  const auth = await authenticateAffiliate(req);
-  if ("error" in auth)
+  if (!checkAuth(req)) {
     return NextResponse.json(
-      { success: false, error_code: "AUTH", message: auth.error },
-      { status: auth.code }
+      { success: false, error_code: "AUTH", message: "Token invalide" },
+      { status: 401 }
     );
+  }
 
   const url = new URL(req.url);
   const productId = url.searchParams.get("product_id");
