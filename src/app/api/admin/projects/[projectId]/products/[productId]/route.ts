@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateProductPayout } from "@/lib/productPayout";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,11 @@ export async function PUT(
 
   if (!name || price === undefined || price === "") {
     return NextResponse.json({ error: "Les champs nom et prix sont obligatoires." }, { status: 400 });
+  }
+
+  const payoutError = validateProductPayout(Number(price), Number(payout) || 0);
+  if (payoutError) {
+    return NextResponse.json({ error: payoutError }, { status: 400 });
   }
 
   const db = createAdminClient();

@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 // Query params optionnels :
 //   - product_id : ne renvoyer que ce produit
 //   - project_id : filtrer sur un projet donné
+//   - status : filtrer sur le statut du produit (ex. active, paused, ...)
 // ---------------------------------------------------------------------------
 
 function checkAuth(req: Request): boolean {
@@ -31,6 +32,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const productId = url.searchParams.get("product_id");
   const projectId = url.searchParams.get("project_id");
+  const status = url.searchParams.get("status");
 
   const db = createAdminClient();
   let query = db
@@ -40,6 +42,7 @@ export async function GET(req: Request) {
 
   if (productId) query = query.eq("id", productId);
   if (projectId) query = query.eq("project_id", projectId);
+  if (status) query = query.eq("status", status);
 
   const { data: products, error } = await query;
   if (error)
