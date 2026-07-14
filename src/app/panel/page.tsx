@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyNetworkId } from "@/lib/auth";
-import { STATUS_META, type OrderStatus } from "@/lib/types";
+import type { OrderStatus } from "@/lib/types";
+import { getOrderStatuses, statusMeta } from "@/lib/orderStatus";
 import { getServerT } from "@/i18n/server";
 import HeroBanner from "@/components/HeroBanner";
 import KpiCard from "@/components/KpiCard";
@@ -9,6 +10,7 @@ import PieChart from "@/components/PieChart";
 export default async function PanelDashboard() {
   const t = getServerT();
   const supabase = createClient();
+  const statuses = await getOrderStatuses(supabase);
   // Isolation : un affilié ne voit QUE ses propres leads (+ RLS en filet).
   const networkId = await getMyNetworkId();
   const { data: orders } = networkId
@@ -48,7 +50,7 @@ export default async function PanelDashboard() {
   const statusCounts = new Map<string, number>();
   for (const r of rows) statusCounts.set(r.status, (statusCounts.get(r.status) ?? 0) + 1);
   const statusData = Array.from(statusCounts.entries()).map(([s, value]) => ({
-    label: STATUS_META[s as OrderStatus]?.label ?? s,
+    label: statusMeta(statuses, s)?.title ?? s,
     value,
   }));
 

@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { STATUS_META, type OrderStatus } from "@/lib/types";
+import { getOrderStatuses, statusMeta } from "@/lib/orderStatus";
 import { formatProductPrice } from "@/lib/currency";
 import { getServerT } from "@/i18n/server";
 import MbExportButton from "./MbExportButton";
@@ -10,6 +10,7 @@ export default async function AdminMbOrdersPage() {
   const t = getServerT();
   // Admin : voit toutes les commandes media buyers (service role).
   const db = createAdminClient();
+  const statuses = await getOrderStatuses(db);
   const { data } = await db
     .from("mediabuyers_orders")
     .select(
@@ -49,7 +50,7 @@ export default async function AdminMbOrdersPage() {
           </thead>
           <tbody>
             {rows.map((o: any) => {
-              const meta = STATUS_META[o.status as OrderStatus];
+              const meta = statusMeta(statuses, o.status);
               const buyer = (o.profiles as any)?.full_name;
               return (
                 <tr key={o.id} className="row-hover">
@@ -60,7 +61,7 @@ export default async function AdminMbOrdersPage() {
                   <td className="td">{o.campaign ?? "—"}</td>
                   <td className="td">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta?.color}`}>
-                      {meta?.label ?? o.status}
+                      {meta?.title ?? o.status}
                     </span>
                   </td>
                   <td className="td">{o.payout_amount != null ? formatProductPrice(o.payout_amount, o.country) : "—"}</td>

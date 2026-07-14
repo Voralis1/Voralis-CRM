@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getMyNetworkId } from "@/lib/auth";
 import { affiliateConfirmationRateFor, type RateOrder } from "@/lib/confirmationRate";
+import { getOrderStatuses } from "@/lib/orderStatus";
 import { LeadsTable } from "./LeadsTable";
 import { TopOffers } from "./TopOffers";
 
@@ -9,9 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function PanelLeads() {
   const supabase = createClient();
+  const statuses = await getOrderStatuses(supabase);
   // Isolation : un affilié ne voit QUE ses propres leads.
   const networkId = await getMyNetworkId();
-  if (!networkId) return <LeadsTable rows={[]} />;
+  if (!networkId) return <LeadsTable rows={[]} statuses={statuses} />;
 
   const { data: orders } = await supabase
     .from("orders")
@@ -58,7 +60,7 @@ export default async function PanelLeads() {
   return (
     <div className="space-y-6">
       <TopOffers offers={topOffers} />
-      <LeadsTable rows={rows} />
+      <LeadsTable rows={rows} statuses={statuses} />
     </div>
   );
 }

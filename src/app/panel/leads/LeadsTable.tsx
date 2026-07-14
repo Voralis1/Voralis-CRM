@@ -1,13 +1,14 @@
 "use client";
 
-import { STATUS_META, type OrderStatus, ALL_STATUSES } from "@/lib/types";
 import { useState } from "react";
 import { updateOrder, createOrder, deleteOrder, fetchProducts } from "./actions";
 import { formatPayout } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
+import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
 
 interface LeadsTableProps {
   rows: any[];
+  statuses: OrderStatusRow[];
 }
 
 interface Product {
@@ -17,7 +18,7 @@ interface Product {
   country: string | null;
 }
 
-export function LeadsTable({ rows }: LeadsTableProps) {
+export function LeadsTable({ rows, statuses }: LeadsTableProps) {
   const t = useT();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
@@ -56,7 +57,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
         t("aff.leads.colExtraInfo"),
       ],
       ...rows.map((o) => {
-        const meta = STATUS_META[o.status as OrderStatus];
+        const meta = statusMeta(statuses, o.status);
         const affiliates = o.affiliate_network as any;
         const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
@@ -67,7 +68,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           affiliates?.name ?? "",
           o.affiliate ?? "",
           new Date(o.created_at).toLocaleString("fr-FR"),
-          meta?.label ?? o.status,
+          meta?.title ?? o.status,
           o.payout_amount != null ? formatPayout(o.payout_amount) : "",
           fullName,
           o.phone,
@@ -332,9 +333,9 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                     }
                     className="input w-full"
                   >
-                    {ALL_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {STATUS_META[status].label}
+                    {statuses.map((status) => (
+                      <option key={status.slug} value={status.slug}>
+                        {status.title}
                       </option>
                     ))}
                   </select>
@@ -439,9 +440,9 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                     }
                     className="input w-full"
                   >
-                    {ALL_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {STATUS_META[status].label}
+                    {statuses.map((status) => (
+                      <option key={status.slug} value={status.slug}>
+                        {status.title}
                       </option>
                     ))}
                   </select>
@@ -609,7 +610,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
           </thead>
           <tbody>
             {rows.map((o) => {
-              const meta = STATUS_META[o.status as OrderStatus];
+              const meta = statusMeta(statuses, o.status);
               const affiliates = o.affiliate_network as any;
               const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
@@ -627,7 +628,7 @@ export function LeadsTable({ rows }: LeadsTableProps) {
                     <span
                       className={`badge ${meta?.color}`}
                     >
-                      {meta?.label ?? o.status}
+                      {meta?.title ?? o.status}
                     </span>
                   </td>
                   <td className="td">

@@ -1,8 +1,9 @@
 "use client";
 
-import { STATUS_META, type OrderStatus } from "@/lib/types";
+import { useEffect, useState } from "react";
 import { formatProductPrice } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
+import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
 
 interface OrdersTableProps {
   rows: any[];
@@ -10,6 +11,15 @@ interface OrdersTableProps {
 
 export function OrdersTable({ rows }: OrdersTableProps) {
   const t = useT();
+  const [statuses, setStatuses] = useState<OrderStatusRow[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/statuses", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => setStatuses(data.statuses || []))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="card overflow-x-auto">
       <table className="w-full min-w-[1200px]">
@@ -31,7 +41,7 @@ export function OrdersTable({ rows }: OrdersTableProps) {
         </thead>
         <tbody>
           {rows.map((o) => {
-            const meta = STATUS_META[o.status as OrderStatus];
+            const meta = statusMeta(statuses, o.status);
             const affiliates = o.affiliate_network as any;
             const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
@@ -45,7 +55,7 @@ export function OrdersTable({ rows }: OrdersTableProps) {
                 <td className="td text-xs text-ink-muted">{new Date(o.created_at).toLocaleString("fr-FR")}</td>
                 <td className="td">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta?.color}`}>
-                    {meta?.label ?? o.status}
+                    {meta?.title ?? o.status}
                   </span>
                 </td>
                 <td className="td">{o.payout_amount != null ? formatProductPrice(o.payout_amount, o.country) : "—"}</td>

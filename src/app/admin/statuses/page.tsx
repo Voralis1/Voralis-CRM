@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
 
 interface StatusItem {
-  id: string;
+  id: number;
+  slug: string;
   title: string;
   group: string;
+  color: string;
   hideDateFromAffiliates: boolean;
   sortLabel: string;
 }
@@ -25,10 +27,30 @@ const SORT_LABEL_KEYS: Record<string, string> = {
   "Par date de commande": "adm.statuses.sortByOrderDate",
 };
 
-const initialForm: StatusItem = {
-  id: "",
+// Palette fixe (mêmes classes Tailwind que les statuts historiques) pour garder
+// un rendu de badge cohérent quel que soit le statut, y compris les nouveaux.
+const COLOR_OPTIONS = [
+  { value: "bg-slate-100 text-slate-700", label: "Gris" },
+  { value: "bg-amber-100 text-amber-800", label: "Ambre" },
+  { value: "bg-orange-100 text-orange-800", label: "Orange" },
+  { value: "bg-yellow-100 text-yellow-800", label: "Jaune" },
+  { value: "bg-emerald-100 text-emerald-800", label: "Émeraude" },
+  { value: "bg-cyan-100 text-cyan-800", label: "Cyan" },
+  { value: "bg-sky-100 text-sky-800", label: "Ciel" },
+  { value: "bg-blue-100 text-blue-800", label: "Bleu" },
+  { value: "bg-green-200 text-green-900", label: "Vert" },
+  { value: "bg-rose-100 text-rose-700", label: "Rose" },
+  { value: "bg-red-100 text-red-700", label: "Rouge" },
+];
+
+// Slug = identifiant technique stocké dans orders.status (immuable une fois créé).
+const SLUG_PATTERN = /^[a-z0-9_]+$/;
+
+const initialForm: Omit<StatusItem, "id"> = {
+  slug: "",
   title: "",
   group: GROUP_OPTIONS[0],
+  color: COLOR_OPTIONS[0].value,
   hideDateFromAffiliates: false,
   sortLabel: SORT_OPTIONS[0],
 };
@@ -39,8 +61,8 @@ export default function StatusesAdminPage() {
   const sortLabel = (s: string) => (SORT_LABEL_KEYS[s] ? t(SORT_LABEL_KEYS[s]) : s);
   const [statuses, setStatuses] = useState<StatusItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState<StatusItem>(initialForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<Omit<StatusItem, "id">>(initialForm);
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,33 +82,38 @@ export default function StatusesAdminPage() {
   }, []);
 
   const canSubmit = useMemo(
-    () => form.id.trim() !== "" && form.title.trim() !== "" && form.group.trim() !== "",
+    () =>
+      form.slug.trim() !== "" &&
+      SLUG_PATTERN.test(form.slug.trim()) &&
+      form.title.trim() !== "" &&
+      form.group.trim() !== "",
     [form]
   );
 
-  const handleChange = (key: keyof StatusItem, value: string | boolean) => {
+  const handleChange = (key: keyof Omit<StatusItem, "id">, value: string | boolean) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
   const openNew = () => {
-    setEditingId(null);
+    setEditingSlug(null);
     setForm(initialForm);
     setError(null);
     setIsModalOpen(true);
   };
 
   const openEdit = (status: StatusItem) => {
-    setEditingId(status.id);
+    setEditingSlug(status.slug);
     setForm(status);
     setError(null);
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (slug: string) => {
     if (!confirm(t("adm.statuses.confirmDelete"))) return;
     try {
-      const res = await fetch(`/api/admin/statuses/${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(t("adm.statuses.errDelete"));
+      const res = await fetch(`/api/admin/statuses/${encodeURIComponent(slug)}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("adm.statuses.errDelete"));
       await fetchStatuses();
     } catch (err) {
       setError((err as Error).message);
@@ -98,17 +125,18 @@ export default function StatusesAdminPage() {
     setIsSaving(true);
     setError(null);
     try {
-      const url = editingId
-        ? `/api/admin/statuses/${encodeURIComponent(editingId)}`
+      const url = editingSlug
+        ? `/api/admin/statuses/${encodeURIComponent(editingSlug)}`
         : "/api/admin/statuses";
-      const method = editingId ? "PUT" : "POST";
+      const method = editingSlug ? "PUT" : "POST";
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: form.id,
+          slug: form.slug.trim(),
           title: form.title,
           group: form.group,
+          color: form.color,
           hideDateFromAffiliates: form.hideDateFromAffiliates,
           sortLabel: form.sortLabel,
         }),
@@ -117,7 +145,7 @@ export default function StatusesAdminPage() {
       if (!res.ok) throw new Error(data.error || t("adm.statuses.errSave"));
       setIsModalOpen(false);
       setForm(initialForm);
-      setEditingId(null);
+      setEditingSlug(null);
       await fetchStatuses();
     } catch (err) {
       setError((err as Error).message);
@@ -150,21 +178,22 @@ export default function StatusesAdminPage() {
             </button>
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">{editingId ? t("adm.statuses.editStatus") : t("adm.statuses.newStatus")}</h2>
+                <h2 className="text-lg font-semibold">{editingSlug ? t("adm.statuses.editStatus") : t("adm.statuses.newStatus")}</h2>
                 <p className="text-sm text-ink-muted">{t("adm.statuses.formHint")}</p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 text-sm">
-                  <span>{t("adm.statuses.id")}</span>
+                  <span>{t("adm.statuses.slug")}</span>
                   <input
                     type="text"
-                    value={form.id}
-                    onChange={(e) => handleChange("id", e.target.value)}
-                    disabled={!!editingId}
+                    value={form.slug}
+                    onChange={(e) => handleChange("slug", e.target.value.toLowerCase())}
+                    disabled={!!editingSlug}
                     className="input w-full disabled:bg-elevated"
-                    placeholder={t("adm.statuses.phId")}
+                    placeholder={t("adm.statuses.phSlug")}
                   />
+                  <span className="text-xs text-ink-muted">{t("adm.statuses.slugHint")}</span>
                 </label>
                 <label className="space-y-2 text-sm">
                   <span>{t("adm.statuses.statusTitle")}</span>
@@ -186,6 +215,20 @@ export default function StatusesAdminPage() {
                     {GROUP_OPTIONS.map((g) => (
                       <option key={g} value={g}>
                         {groupLabel(g)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm">
+                  <span>{t("adm.statuses.color")}</span>
+                  <select
+                    value={form.color}
+                    onChange={(e) => handleChange("color", e.target.value)}
+                    className="input w-full"
+                  >
+                    {COLOR_OPTIONS.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
                       </option>
                     ))}
                   </select>
@@ -229,7 +272,7 @@ export default function StatusesAdminPage() {
                   onClick={handleSave}
                   className="btn btn-primary disabled:opacity-50"
                 >
-                  {isSaving ? t("adm.statuses.saving") : editingId ? t("adm.statuses.modify") : t("adm.statuses.save")}
+                  {isSaving ? t("adm.statuses.saving") : editingSlug ? t("adm.statuses.modify") : t("adm.statuses.save")}
                 </button>
               </div>
             </div>
@@ -242,10 +285,11 @@ export default function StatusesAdminPage() {
       )}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[800px]">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-elevated">
             <tr>
               <th className="th">{t("adm.statuses.colId")}</th>
+              <th className="th">{t("adm.statuses.colSlug")}</th>
               <th className="th">{t("adm.statuses.colTitle")}</th>
               <th className="th">{t("adm.statuses.colGroup")}</th>
               <th className="th">{t("adm.statuses.colHideDate")}</th>
@@ -256,14 +300,19 @@ export default function StatusesAdminPage() {
           <tbody>
             {statuses.length === 0 ? (
               <tr>
-                <td className="td text-center text-ink-muted" colSpan={6}>
+                <td className="td text-center text-ink-muted" colSpan={7}>
                   {t("adm.statuses.empty")}
                 </td>
               </tr>
             ) : (
               statuses.map((status) => (
-                <tr key={status.id} className="row-hover">
+                <tr key={status.slug} className="row-hover">
                   <td className="td font-mono text-xs">{status.id}</td>
+                  <td className="td">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>
+                      {status.slug}
+                    </span>
+                  </td>
                   <td className="td">{status.title}</td>
                   <td className="td">{groupLabel(status.group)}</td>
                   <td className="td">{status.hideDateFromAffiliates ? t("adm.statuses.yes") : t("adm.statuses.no")}</td>
@@ -279,7 +328,7 @@ export default function StatusesAdminPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(status.id)}
+                        onClick={() => handleDelete(status.slug)}
                         className="text-xs text-danger hover:underline"
                       >
                         {t("adm.statuses.delete")}

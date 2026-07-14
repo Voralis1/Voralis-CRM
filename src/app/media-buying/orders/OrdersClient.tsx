@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { STATUS_META, ALL_STATUSES, type OrderStatus } from "@/lib/types";
 import { formatProductPrice } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
+import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
 import { createMbOrder, deleteMbOrder } from "./actions";
 
 const empty = {
@@ -17,10 +17,12 @@ export default function OrdersClient({
   rows,
   products = [],
   campaigns = [],
+  statuses,
 }: {
   rows: any[];
   products?: string[];
   campaigns?: string[];
+  statuses: OrderStatusRow[];
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -104,7 +106,7 @@ export default function OrdersClient({
               <div>
                 <label className="block text-sm font-medium mb-1">{t("mb.orders.status")}</label>
                 <select value={form.status} onChange={(e) => set("status", e.target.value)} className="input w-full">
-                  {ALL_STATUSES.map((s) => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
+                  {statuses.map((s) => <option key={s.slug} value={s.slug}>{s.title}</option>)}
                 </select>
               </div>
               <div className="col-span-2">
@@ -135,14 +137,14 @@ export default function OrdersClient({
           </thead>
           <tbody>
             {rows.map((o) => {
-              const meta = STATUS_META[o.status as OrderStatus];
+              const meta = statusMeta(statuses, o.status);
               return (
                 <tr key={o.id} className="row-hover">
                   <td className="td font-mono text-xs">{o.public_id}</td>
                   <td className="td">{o.product ?? "—"}</td>
                   <td className="td">{o.country ?? "—"}</td>
                   <td className="td">{o.campaign ?? "—"}</td>
-                  <td className="td"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta?.color}`}>{meta?.label ?? o.status}</span></td>
+                  <td className="td"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta?.color}`}>{meta?.title ?? o.status}</span></td>
                   <td className="td">{o.payout_amount != null ? formatProductPrice(o.payout_amount, o.country) : "—"}</td>
                   <td className="td">{o.first_name}{o.last_name ? ` ${o.last_name}` : ""}</td>
                   <td className="td">{o.phone}</td>

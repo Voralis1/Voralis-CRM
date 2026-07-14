@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getOrderStatuses } from "@/lib/orderStatus";
 import OrdersClient from "./OrdersClient";
 
 export const dynamic = "force-dynamic";
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function MbOrdersPage() {
   // RLS : le media buyer ne voit que ses propres commandes.
   const supabase = createClient();
+  const statuses = await getOrderStatuses(supabase);
   const { data } = await supabase
     .from("mediabuyers_orders")
     .select("id, public_id, product, country, campaign, status, payout_amount, first_name, last_name, phone, created_at")
@@ -26,5 +28,5 @@ export default async function MbOrdersPage() {
   for (const s of spend ?? []) if (s.campaign) set.add(s.campaign);
   const campaigns = Array.from(set).sort();
 
-  return <OrdersClient rows={data ?? []} products={products} campaigns={campaigns} />;
+  return <OrdersClient rows={data ?? []} products={products} campaigns={campaigns} statuses={statuses} />;
 }

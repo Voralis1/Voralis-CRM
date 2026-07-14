@@ -13,7 +13,9 @@ export type SubColKey = (typeof SUBCOLS)[number]["key"];
 export type CellKind = (typeof SUBCOLS)[number]["kind"];
 
 // Les 6 groupes de statut, avec leur couleur d'en-tête et le mapping vers les
-// statuts de commande réels (cf. STATUS_META dans src/lib/types.ts).
+// statuts de commande réels (slugs de la table order_statuses, cf.
+// src/lib/orderStatus.ts). Un statut personnalisé n'entre dans aucun de ces
+// groupes tant qu'il n'est pas explicitement ajouté ici.
 export const STATUS_GROUPS = [
   { key: "approved", label: "Confirmé", color: "#DFF3DF", statuses: ["confirmed"] },
   { key: "canceled", label: "Annulé", color: "#F8D7DA", statuses: ["cancelled", "rejected"] },

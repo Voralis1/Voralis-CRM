@@ -1,16 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { bulkChangeStatus, type BulkUpdateResult } from "../orders/actions";
-import { ALL_STATUSES, STATUS_META, type OrderStatus } from "@/lib/types";
+import type { OrderStatus } from "@/lib/types";
 import { useT } from "@/i18n/I18nProvider";
+
+interface StatusOption {
+  id: number;
+  slug: string;
+  title: string;
+}
 
 export default function BulkUpdatePage() {
   const t = useT();
   const [rawIds, setRawIds] = useState("");
-  const [status, setStatus] = useState<OrderStatus>("confirmed");
+  const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
+  const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<BulkUpdateResult | null>(null);
+
+  // Ne propose que les statuts définis dans l'onglet « Gestion des statuts ».
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/admin/statuses", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const options: StatusOption[] = data.statuses || [];
+      setStatusOptions(options);
+      setStatus((current) => current || options[0]?.slug || "");
+    })();
+  }, []);
+
+  const statusLabel = (slug: string) => statusOptions.find((s) => s.slug === slug)?.title ?? slug;
 
   // Accepte les IDs séparés par retour à la ligne, virgule, point-virgule ou espace.
   const ids = useMemo(
@@ -19,11 +40,11 @@ export default function BulkUpdatePage() {
   );
 
   const handleSubmit = async () => {
-    if (ids.length === 0) return;
+    if (ids.length === 0 || !status) return;
     setIsSaving(true);
     setResult(null);
     try {
-      const res = await bulkChangeStatus(ids, status);
+      const res = await bulkChangeStatus(ids, status as OrderStatus);
       setResult(res);
       if (res.updated.length > 0 && res.notFound.length === 0) setRawIds("");
     } finally {
@@ -59,12 +80,12 @@ export default function BulkUpdatePage() {
           <span className="font-medium">{t("adm.bulk.newStatus")}</span>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as OrderStatus)}
+            onChange={(e) => setStatus(e.target.value)}
             className="input w-full max-w-xs"
           >
-            {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_META[s].label}
+            {statusOptions.map((s) => (
+              <option key={s.slug} value={s.slug}>
+                {s.title}
               </option>
             ))}
           </select>
@@ -86,7 +107,7 @@ export default function BulkUpdatePage() {
         <div className="card space-y-3 p-6">
           <div className="alert alert-success">
             {result.updated.length} {result.updated.length > 1 ? t("adm.bulk.orderPlural") : t("adm.bulk.orderSingular")}{" "}
-            {result.updated.length > 1 ? t("adm.bulk.updatedToward") : t("adm.bulk.updatedTowardSingular")} «&nbsp;{STATUS_META[status].label}&nbsp;».
+            {result.updated.length > 1 ? t("adm.bulk.updatedToward") : t("adm.bulk.updatedTowardSingular")} «&nbsp;{statusLabel(status)}&nbsp;».
           </div>
           {result.updated.length > 0 && (
             <div className="text-xs font-mono text-ink-muted">{result.updated.join(", ")}</div>

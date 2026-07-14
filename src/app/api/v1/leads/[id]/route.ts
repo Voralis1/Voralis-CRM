@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticateAffiliate } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { STATUS_META } from "@/lib/types";
+import { getOrderStatusBySlug } from "@/lib/orderStatus";
 
 export const runtime = "nodejs";
 
@@ -32,9 +32,10 @@ export async function GET(
     );
 
   const { affiliate_id, status, ...rest } = order as any;
+  const statusRow = await getOrderStatusBySlug(db, status);
   return NextResponse.json({
     ...rest,
     status,
-    status_label: STATUS_META[status as keyof typeof STATUS_META]?.label ?? status,
+    status_label: statusRow?.title ?? status,
   });
 }
