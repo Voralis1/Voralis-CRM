@@ -30,6 +30,7 @@ export type Order = {
   quantity: number;
   ip: string | null;
   affiliate: string | null;
+  sub1: string | null; sub2: string | null;
   sub3: string | null; sub4: string | null; sub5: string | null;
   comment: string | null;
   status: OrderStatus;

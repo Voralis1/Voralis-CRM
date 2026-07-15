@@ -67,7 +67,7 @@ Créé automatiquement à l'inscription via le trigger `handle_new_user` (functi
 | `quantity` | int | défaut 1 |
 | `ip`, `user_agent` | text | |
 | `affiliate` | text | sous-affilié (ex-`sub2`) |
-| `sub3`, `sub4`, `sub5` | text | tracking |
+| `sub1`, `sub2`, `sub3`, `sub4`, `sub5` | text | tracking |
 | `comment` | text | notes internes |
 | `status` | `order_status` | défaut `new` |
 | `assigned_agent` | uuid | → `profiles.id` (set null) |

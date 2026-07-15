@@ -87,6 +87,8 @@ export async function ingestLead(
     ip: lead.ip ?? null,
     user_agent: lead.user_agent ?? null,
     affiliate: lead.affiliate,
+    sub1: lead.sub1 ?? null,
+    sub2: lead.sub2 ?? null,
     sub3: lead.sub3 ?? null,
     sub4: lead.sub4 ?? null, sub5: lead.sub5 ?? null,
     comment: lead.comment ?? null,

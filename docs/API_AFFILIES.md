@@ -45,7 +45,7 @@ Content-Type: application/json
 | `city`         | — | Ville — ≤ 120 caractères. |
 | `ip`           | — | IP du prospect (recommandé pour l'antifraude). |
 | `user_agent`   | — | User-agent du prospect (recommandé). |
-| `sub3`…`sub5`  | — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
+| `sub1`…`sub5`  | — | Vos autres paramètres de tracking (campagne…). ≤ 255 chacun. |
 | `comment`      | — | Note libre (contexte, remarques…) — ≤ 1000 caractères. |
 
 > **Champs obligatoires :** `first_name`, `phone`, `country`, `quantity`, `affiliate`, et **au moins un** de `product_id`/`product_name` (\* — omettre les deux renvoie une erreur `400 VALIDATION`).
@@ -179,7 +179,7 @@ Communiquez-nous une **URL de postback** avec des macros, par ex. :
 https://votre-serveur.com/postback?id={lead_id}&status={status}&payout={payout}
 ```
 
-Macros disponibles : `{lead_id}`, `{status}`, `{status_label}`, `{product_id}`, `{country}`, `{payout}`, `{currency}`, `{quantity}`, `{comment}`, `{affiliate}`, `{sub3}`…`{sub5}`, `{timestamp}`.
+Macros disponibles : `{lead_id}`, `{status}`, `{status_label}`, `{product_id}`, `{country}`, `{payout}`, `{currency}`, `{quantity}`, `{comment}`, `{affiliate}`, `{sub1}`…`{sub5}`, `{timestamp}`.
 En **POST**, le corps est signé (`X-Voralis-Signature` = HMAC-SHA256 du corps avec votre secret).
 
 ---
@@ -208,6 +208,8 @@ Content-Type: application/x-www-form-urlencoded
 | `goodID` / `goods[0][goodID]` | `product_id` | ID du produit, prioritaire sur `product_name`. **Un des deux** est obligatoire. |
 | `ip`                        | `ip`          | |
 | `externalWebmaster`         | `affiliate`   | **Obligatoire** — identifiant de votre affilié. |
+| `utm_source`                | `sub1`        | |
+| `utm_term`                  | `sub2`        | |
 | `utm_campaign`              | `sub3`        | |
 | `utm_medium`                | `sub4`        | |
 | `utm_content`               | `sub5`        | |

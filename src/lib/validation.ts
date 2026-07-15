@@ -31,6 +31,8 @@ export const leadSchema = z
     user_agent: z.string().max(400).optional().nullable(),
     // Affiliate (sous-affilié) obligatoire.
     affiliate: z.string().min(1, "affiliate requis").max(255),
+    sub1: z.string().max(255).optional().nullable(),
+    sub2: z.string().max(255).optional().nullable(),
     sub3: z.string().max(255).optional().nullable(),
     sub4: z.string().max(255).optional().nullable(),
     sub5: z.string().max(255).optional().nullable(),

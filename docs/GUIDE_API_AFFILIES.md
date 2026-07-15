@@ -48,7 +48,7 @@ Content-Type: application/json
 | `city` | ⬜ | texte | Ville. Max 120 |
 | `ip` | ⬜ | texte | IP du client. Max 60 |
 | `user_agent` | ⬜ | texte | User-agent du client. Max 400 |
-| `sub3`, `sub4`, `sub5` | ⬜ | texte | Paramètres de tracking libres. Max 255 |
+| `sub1`, `sub2`, `sub3`, `sub4`, `sub5` | ⬜ | texte | Paramètres de tracking libres. Max 255 |
 | `comment` | ⬜ | texte | Note interne. Max 1000 |
 
 > \* `product_id` **ou** `product_name` est obligatoire — au moins l'un des deux doit être envoyé (les deux ensemble fonctionnent aussi, `product_id` étant alors prioritaire). Omettre les deux renvoie une erreur `400 VALIDATION`.
@@ -132,7 +132,11 @@ curl https://VOTRE-DOMAINE.com/api/v1/leads/000123 \
   "created_at": "2026-06-30T10:15:00Z",
   "updated_at": "2026-06-30T12:40:00Z",
   "affiliate": "fb_camp_12",
+  "sub1": null,
+  "sub2": null,
   "sub3": "adset_45",
+  "sub4": null,
+  "sub5": null,
   "payout_amount": 6.00,
   "payout_currency": "USD"
 }
@@ -191,7 +195,7 @@ Un lead évolue au fil de son traitement. Voici les statuts possibles :
 | `{quantity}` | Quantité |
 | `{comment}` | Commentaire |
 | `{affiliate}` | Votre identifiant de sous-affilié |
-| `{sub3}` `{sub4}` `{sub5}` | Vos paramètres de tracking |
+| `{sub1}` `{sub2}` `{sub3}` `{sub4}` `{sub5}` | Vos paramètres de tracking |
 | `{timestamp}` | Date/heure ISO 8601 |
 
 ### Exemple d'URL de postback

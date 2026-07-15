@@ -11,7 +11,7 @@ type DispatchRow = {
   max_attempts: number;
 };
 
-// Remplace les macros {lead_id}, {status}, {payout}, {affiliate}, {sub3}.. par les vraies valeurs.
+// Remplace les macros {lead_id}, {status}, {payout}, {affiliate}, {sub1}.. par les vraies valeurs.
 function resolveTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, key) =>
     encodeURIComponent(vars[key] ?? "")
@@ -32,6 +32,8 @@ function buildVars(order: any, product: any): Record<string, string> {
     quantity: String(order.quantity ?? 1),
     comment: order.comment ?? "",
     affiliate: order.affiliate ?? "",
+    sub1: order.sub1 ?? "",
+    sub2: order.sub2 ?? "",
     sub3: order.sub3 ?? "",
     sub4: order.sub4 ?? "",
     sub5: order.sub5 ?? "",

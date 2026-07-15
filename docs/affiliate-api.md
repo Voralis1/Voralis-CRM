@@ -25,7 +25,7 @@ Champs optionnels:
 - `city` (string)
 - `ip` (string)
 - `user_agent` (string)
-- `sub3` .. `sub5` (string)
+- `sub1` .. `sub5` (string)
 - `comment` (string)
 
 Exemple minimal valide:

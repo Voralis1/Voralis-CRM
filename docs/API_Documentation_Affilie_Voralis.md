@@ -52,7 +52,7 @@ Content-Type: application/json
 | `city` | — | text | City. Max 120 |
 | `ip` | — | text | Client IP. Max 60 |
 | `user_agent` | — | text | Client user-agent. Max 400 |
-| `sub3`, `sub4`, `sub5` | — | text | Free tracking parameters. Max 255 |
+| `sub1`, `sub2`, `sub3`, `sub4`, `sub5` | — | text | Free tracking parameters. Max 255 |
 | `comment` | — | text | Internal note. Max 1000 |
 
 > \* `product_id` **or** `product_name` is required — at least one of the two must be sent (both together is fine, `product_id` then takes priority). Omitting both returns a `400 VALIDATION` error.
@@ -152,7 +152,11 @@ curl https://www.voralisnatural.com/api/v1/leads/000123 \
   "created_at": "2026-06-30T10:15:00Z",
   "updated_at": "2026-06-30T12:40:00Z",
   "affiliate": "fb_camp_12",
+  "sub1": null,
+  "sub2": null,
   "sub3": "adset_45",
+  "sub4": null,
+  "sub5": null,
   "payout_amount": 6.00,
   "payout_currency": "USD"
 }
@@ -211,7 +215,7 @@ On every status change, VORALIS automatically calls your tracker URL to notify y
 | `{quantity}` | Quantity |
 | `{comment}` | Comment |
 | `{affiliate}` | Your sub-affiliate ID |
-| `{sub3}` `{sub4}` `{sub5}` | Your tracking parameters |
+| `{sub1}` `{sub2}` `{sub3}` `{sub4}` `{sub5}` | Your tracking parameters |
 | `{timestamp}` | ISO 8601 date/time |
 
 ### Example postback URL

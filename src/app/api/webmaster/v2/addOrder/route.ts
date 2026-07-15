@@ -108,6 +108,8 @@ export async function POST(req: Request) {
     user_agent: req.headers.get("user-agent") || b.user_agent || undefined,
     // externalWebmaster = identifiant de l'affilié -> affiliate (obligatoire)
     affiliate: b.affiliate || b.externalWebmaster || undefined,
+    sub1: b.sub1 || b.utm_source || undefined,
+    sub2: b.sub2 || b.utm_term || undefined,
     sub3: b.sub3 || b.utm_campaign || undefined,
     sub4: b.sub4 || b.utm_medium || undefined,
     sub5: b.sub5 || b.utm_content || undefined,

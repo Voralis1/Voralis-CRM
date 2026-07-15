@@ -93,7 +93,7 @@ export default async function PanelSettings() {
               <li><code>city</code></li>
               <li><code>ip</code></li>
               <li><code>user_agent</code></li>
-              <li><code>sub3</code> ... <code>sub5</code></li>
+              <li><code>sub1</code> ... <code>sub5</code></li>
               <li><code>comment</code></li>
             </ul>
           </div>
@@ -145,7 +145,7 @@ export default async function PanelSettings() {
         <h2 className="text-base font-semibold text-ink">{t("aff.settings.postbackTitle")}</h2>
         <p className="mb-3 mt-1 text-sm text-ink-muted">
           {t("aff.settings.macrosLabel")} <code className="font-mono text-xs">
-          {"{lead_id} {status} {payout} {currency} {product_id} {country} {affiliate} {sub3}…{sub5} {timestamp}"}</code>
+          {"{lead_id} {status} {payout} {currency} {product_id} {country} {affiliate} {sub1}…{sub5} {timestamp}"}</code>
         </p>
         <form action={savePostback} className="space-y-3">
           <input

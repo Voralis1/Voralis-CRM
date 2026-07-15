@@ -31,7 +31,7 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 | `city` | ⬜ | ≤ 120 |
 | `ip` | ⬜ | ≤ 60 |
 | `user_agent` | ⬜ | ≤ 400 |
-| `sub3`, `sub4`, `sub5` | ⬜ | ≤ 255 |
+| `sub1`, `sub2`, `sub3`, `sub4`, `sub5` | ⬜ | ≤ 255 |
 | `comment` | ⬜ | ≤ 1000 |
 
 \* Au moins un des deux (`superRefine` dans `validation.ts`) : `product_id` ou `product_name` requis, sinon `400 VALIDATION` (`details.product_id`).
@@ -64,7 +64,7 @@ Champs (validés par zod, `src/lib/validation.ts`) :
   "public_id": "000123", "product_id": "218022", "product": "PERDA DE PESO",
   "status": "confirmed", "status_label": "Confirmé",
   "country": "AO", "created_at": "…", "updated_at": "…",
-  "affiliate": "fb_camp_123", "sub3": "…",
+  "affiliate": "fb_camp_123", "sub1": "…", "sub2": "…", "sub3": "…", "sub4": "…", "sub5": "…",
   "payout_amount": 5.50, "payout_currency": "USD"
 }
 ```
@@ -90,7 +90,7 @@ Même flux interne que `/api/v1/leads`, avec mapping des champs LeadVertex :
 | `goods[0][quantity]` | `quantity` |
 | `goodID` / `goods[0][goodID]` | `product_id` (un des deux `product_*` requis) |
 | `externalWebmaster` | `affiliate` |
-| `utm_campaign` / `utm_medium` / `utm_content` | `sub3` / `sub4` / `sub5` |
+| `utm_source` / `utm_term` / `utm_campaign` / `utm_medium` / `utm_content` | `sub1` / `sub2` / `sub3` / `sub4` / `sub5` |
 | `domain`, `additional14`, `additional15` | regroupés dans `comment` |
 
 **201**
@@ -156,7 +156,7 @@ En amont, `leadSchema.safeParse` (`src/lib/validation.ts`) valide le payload —
 | `{quantity}` | quantité (ou `1`) |
 | `{comment}` | commentaire |
 | `{affiliate}` | sous-affilié |
-| `{sub3}` `{sub4}` `{sub5}` | tracking |
+| `{sub1}` `{sub2}` `{sub3}` `{sub4}` `{sub5}` | tracking |
 | `{timestamp}` | ISO 8601 |
 
 ### `GET|POST /api/internal/dispatch`
