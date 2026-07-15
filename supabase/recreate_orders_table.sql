@@ -79,7 +79,7 @@ create index if not exists idx_history_order on status_history(order_id);
 create table if not exists postbacks (
   id              bigint generated always as identity primary key,
   order_id        uuid not null references orders(id) on delete cascade,
-  affiliate_id    uuid not null references affiliates(id) on delete cascade,
+  affiliate_id    uuid not null references affiliate_network(id) on delete cascade,
   status          order_status not null,
   method          text not null default 'GET',
   url             text,
@@ -95,15 +95,17 @@ create table if not exists postbacks (
 create index if not exists idx_postbacks_state on postbacks(state, attempts);
 
 -- Recréation du trigger pour les changements de statut
+-- NB : orders.affiliate_id référence désormais affiliate_network (cf.
+-- create_affiliate_model.sql), pas la table `affiliates` d'origine.
 create or replace function on_order_status_change()
 returns trigger language plpgsql security definer set search_path = public as $$
-declare aff affiliates%rowtype;
+declare aff affiliate_network%rowtype;
 begin
   if new.status is distinct from old.status then
     insert into status_history(order_id, from_status, to_status, changed_by)
     values (new.id, old.status, new.status, new.assigned_agent);
 
-    select * into aff from affiliates where id = new.affiliate_id;
+    select * into aff from affiliate_network where id = new.affiliate_id;
     if aff.postback_url is not null and length(trim(aff.postback_url)) > 0 then
       insert into postbacks(order_id, affiliate_id, status, method)
       values (new.id, new.affiliate_id, new.status, coalesce(aff.postback_method,'GET'));

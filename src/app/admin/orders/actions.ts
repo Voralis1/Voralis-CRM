@@ -73,6 +73,7 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   }
 
   revalidatePath("/admin/orders");
+  revalidatePath("/panel/leads");
 }
 
 export interface BulkUpdateResult {
@@ -173,6 +174,7 @@ export async function bulkChangeStatus(
   }
 
   revalidatePath("/admin/orders");
+  revalidatePath("/panel/leads");
   return { updated, notFound, failed, error: firstError };
 }
 
