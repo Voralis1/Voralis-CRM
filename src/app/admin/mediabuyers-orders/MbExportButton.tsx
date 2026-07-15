@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons";
 import { useT } from "@/i18n/I18nProvider";
 import type { TFunc } from "@/i18n/dictionaries";
 import { downloadFile } from "@/lib/downloadFile";
+import { buildExcelBlob } from "@/lib/exportExcel";
 
 const buildHeaders = (t: TFunc): string[] => [
   t("adm.mbOrders.colId"),
@@ -39,28 +40,15 @@ function buildRows(rows: any[]): string[][] {
   });
 }
 
-const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 export default function MbExportButton({ rows }: { rows: any[] }) {
   const t = useT();
   const HEADERS = buildHeaders(t);
   const date = new Date().toISOString().split("T")[0];
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
     const body = buildRows(rows);
-    const thead = `<tr>${HEADERS.map((h) => `<th style="background:#5b4fcf;color:#fff;font-weight:600">${esc(h)}</th>`).join("")}</tr>`;
-    const tbody = body
-      .map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`)
-      .join("");
-    const html =
-      `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">` +
-      `<head><meta charset="UTF-8"></head>` +
-      `<body><table border="1">${thead}${tbody}</table></body></html>`;
-    downloadFile(
-      new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" }),
-      `commandes-media-buyers-${date}.xls`
-    );
+    const blob = await buildExcelBlob(HEADERS, body, "Commandes");
+    downloadFile(blob, `commandes-media-buyers-${date}.xlsx`);
   };
 
   return (
