@@ -1,9 +1,9 @@
 import { Icon, type IconName } from "@/components/icons";
 
 const FEATURES: { icon: IconName; title: string; desc: string }[] = [
-  { icon: "send", title: "Leads COD en temps réel", desc: "Réception et suivi instantané de vos commandes." },
-  { icon: "refresh", title: "Postbacks automatiques", desc: "Chaque statut renvoyé vers votre tracker." },
-  { icon: "chart", title: "Stats & payout par affilié", desc: "Performance et commissions en un coup d'œil." },
+  { icon: "send", title: "Real-time COD leads", desc: "Instant reception and tracking of your orders." },
+  { icon: "refresh", title: "Automatic postbacks", desc: "Every status sent straight to your tracker." },
+  { icon: "chart", title: "Stats & payout per affiliate", desc: "Performance and commissions at a glance." },
 ];
 
 // Mise en page d'authentification : panneau visuel à gauche, formulaire à droite.
@@ -28,10 +28,10 @@ export default function AuthSplit({ children }: { children: React.ReactNode }) {
         {/* Accroche + atouts */}
         <div className="relative max-w-md">
           <h2 className="text-3xl font-bold leading-tight">
-            La plateforme CRM des réseaux d'affiliés COD.
+            The CRM platform for COD affiliate networks.
           </h2>
           <p className="mt-3 text-sm text-white/70">
-            Centralisez l'acquisition, la confirmation, la logistique et le cash — d'un bout à l'autre.
+            Centralize acquisition, confirmation, logistics and cash — end to end.
           </p>
 
           <ul className="mt-8 space-y-4">
@@ -51,7 +51,7 @@ export default function AuthSplit({ children }: { children: React.ReactNode }) {
 
         {/* Pied */}
         <div className="relative text-xs text-white/50">
-          © {"VORALIS"} — Accès réservé aux partenaires.
+          © {"VORALIS"} — Access restricted to partners.
         </div>
       </div>
 

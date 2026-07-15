@@ -24,7 +24,7 @@ export default function SignupPage() {
     const json = await res.json();
     if (!res.ok) {
       setLoading(false);
-      return setErr(json.message ?? "Erreur");
+      return setErr(json.message ?? "Error");
     }
     setLoading(false);
     // Pas de connexion automatique : on renvoie vers la page de connexion.
@@ -39,24 +39,24 @@ export default function SignupPage() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">COD Enterprise</div>
         </div>
 
-        <h1 className="text-2xl font-bold text-ink">Créer un compte</h1>
-        <p className="mb-6 mt-1 text-sm text-ink-muted">Rejoignez la plateforme en tant que partenaire.</p>
+        <h1 className="text-2xl font-bold text-ink">Create an account</h1>
+        <p className="mb-6 mt-1 text-sm text-ink-muted">Join the platform as a partner.</p>
 
-        <label className="label">Type de compte</label>
+        <label className="label">Account type</label>
         <select
           className="input mb-3"
           value={role}
           onChange={(e) => setRole(e.target.value as "affiliate" | "media_buyer")}
         >
-          <option value="affiliate">Affilié</option>
-          <option value="media_buyer">Acheteur d'espaces publicitaires</option>
+          <option value="affiliate">Affiliate</option>
+          <option value="media_buyer">Media buyer</option>
         </select>
 
-        <label className="label">Nom / Société</label>
+        <label className="label">Name / Company</label>
         <input className="input mb-3" value={name} onChange={(e) => setName(e.target.value)} />
         <label className="label">Email</label>
         <input className="input mb-3" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <label className="label">Mot de passe</label>
+        <label className="label">Password</label>
         <input
           className="input mb-4"
           type="password"
@@ -68,11 +68,11 @@ export default function SignupPage() {
         {err && <p className="mb-3 text-sm text-danger">{err}</p>}
 
         <button className="btn-primary w-full" onClick={submit} disabled={loading}>
-          {loading ? "Création…" : "Créer mon compte"}
+          {loading ? "Creating…" : "Create my account"}
         </button>
         <p className="mt-6 text-center text-sm text-ink-muted">
-          Déjà inscrit ?{" "}
-          <a className="font-medium text-accent hover:underline" href="/login">Se connecter</a>
+          Already registered?{" "}
+          <a className="font-medium text-accent hover:underline" href="/login">Log in</a>
         </p>
       </div>
     </AuthSplit>

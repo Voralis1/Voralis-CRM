@@ -81,7 +81,7 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
 
       {!open ? null : (
       <div className="mt-3 space-y-3">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <input
           type="text"
           placeholder={t("adm.orders.phOrderId")}
@@ -112,7 +112,7 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
         />
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <input
           type="text"
           placeholder={t("adm.orders.phStatus")}

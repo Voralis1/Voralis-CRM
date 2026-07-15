@@ -80,7 +80,7 @@ export default function OrdersClient({
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-surface p-6">
             <h2 className="mb-4 text-lg font-semibold text-ink">{t("mb.orders.newOrder")}</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label={t("mb.orders.firstName")} v={form.first_name} on={(v) => set("first_name", v)} />
               <Field label={t("mb.orders.lastName")} v={form.last_name} on={(v) => set("last_name", v)} />
               <Field label={t("mb.orders.phone")} v={form.phone} on={(v) => set("phone", v)} />

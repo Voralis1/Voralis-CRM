@@ -84,7 +84,7 @@ export default function DateRangeCalendar({
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-12 z-40 w-[300px] rounded-lg border border-line bg-surface p-4 shadow-modal">
+          <div className="absolute left-0 top-12 z-40 w-[min(300px,calc(100vw-2rem))] rounded-lg border border-line bg-surface p-4 shadow-modal">
             <div className="mb-3 flex items-center justify-between">
               <button
                 type="button"

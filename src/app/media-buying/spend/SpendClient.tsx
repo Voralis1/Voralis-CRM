@@ -84,7 +84,7 @@ export default function SpendClient({
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-xl rounded-lg bg-surface p-6">
             <h2 className="mb-4 text-lg font-semibold text-ink">{editingId ? t("mb.spend.editSpend") : t("mb.spend.newSpend")}</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium mb-1">{t("mb.spend.date")}</label>
                 <input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} className="input w-full" />

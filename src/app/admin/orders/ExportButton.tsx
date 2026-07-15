@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons";
 import { useT } from "@/i18n/I18nProvider";
 import type { TFunc } from "@/i18n/dictionaries";
 import { downloadFile } from "@/lib/downloadFile";
+import { formatProductPrice } from "@/lib/currency";
 
 interface ExportButtonProps {
   rows: any[];
@@ -27,6 +28,7 @@ const buildHeaders = (t: TFunc): string[] => [
 function buildRows(rows: any[]): string[][] {
   return rows.map((o) => {
     const affiliates = o.affiliate_network as any;
+    const product = o.project_products as any;
     const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
     return [
       o.public_id,
@@ -36,7 +38,7 @@ function buildRows(rows: any[]): string[][] {
       o.affiliate ?? "",
       new Date(o.created_at).toLocaleString("fr-FR"),
       o.status,
-      o.payout_amount != null ? Number(o.payout_amount).toFixed(2) : "",
+      product?.price != null ? formatProductPrice(product.price, o.country) : "",
       fullName,
       o.phone,
       o.address ?? "",

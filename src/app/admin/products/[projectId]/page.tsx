@@ -241,7 +241,7 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
           <h1 className="text-2xl font-bold">{t("adm.products.projectLabel")} {project.name}</h1>
           <p className="text-sm text-ink-muted">{t("adm.products.idLabel")} {project.id} • {t("adm.products.createdOn")} {new Date(project.createdAt).toLocaleDateString("fr-FR")}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button type="button" onClick={openNewProductModal} className="btn btn-primary">
             {t("adm.products.addProduct")}
           </button>

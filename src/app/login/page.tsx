@@ -38,18 +38,18 @@ function LoginForm() {
         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">COD Enterprise</div>
       </div>
 
-      <h1 className="text-2xl font-bold text-ink">Connexion</h1>
-      <p className="mb-6 mt-1 text-sm text-ink-muted">Accédez à votre espace VORALIS.</p>
+      <h1 className="text-2xl font-bold text-ink">Log in</h1>
+      <p className="mb-6 mt-1 text-sm text-ink-muted">Access your VORALIS workspace.</p>
 
       {registered && (
         <p className="alert alert-success mb-4">
-          Compte créé avec succès. Connecte-toi pour continuer.
+          Account created successfully. Log in to continue.
         </p>
       )}
 
       <label className="label">Email</label>
       <input className="input mb-3" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
-      <label className="label">Mot de passe</label>
+      <label className="label">Password</label>
       <input
         className="input mb-4"
         value={pwd}
@@ -61,12 +61,12 @@ function LoginForm() {
       {err && <p className="mb-3 text-sm text-danger">{err}</p>}
 
       <button className="btn-primary w-full" onClick={submit} disabled={loading}>
-        {loading ? "Connexion…" : "Se connecter"}
+        {loading ? "Logging in…" : "Log in"}
       </button>
 
       <p className="mt-6 text-center text-sm text-ink-muted">
-        Pas encore de compte ?{" "}
-        <a className="font-medium text-accent hover:underline" href="/signup">S'inscrire</a>
+        Don't have an account yet?{" "}
+        <a className="font-medium text-accent hover:underline" href="/signup">Sign up</a>
       </p>
     </div>
   );
@@ -75,7 +75,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <AuthSplit>
-      <Suspense fallback={<div className="text-ink-muted">Chargement…</div>}>
+      <Suspense fallback={<div className="text-ink-muted">Loading…</div>}>
         <LoginForm />
       </Suspense>
     </AuthSplit>

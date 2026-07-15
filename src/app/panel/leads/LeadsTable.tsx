@@ -171,7 +171,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
 
   return (
     <>
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={handleExportExcel}
           className="btn-primary"
@@ -191,7 +191,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
           <div className="modal max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{t("aff.leads.createTitle")}</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">{t("aff.leads.labelAffiliateRequired")}</label>
                   <input
@@ -243,7 +243,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
                     {t("aff.leads.labelFirstNameRequired")}
@@ -274,7 +274,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
                     {t("aff.leads.labelPhoneRequired")}
@@ -319,7 +319,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">{t("aff.leads.labelStatus")}</label>
                   <select
@@ -392,7 +392,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
           <div className="modal max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">{t("aff.leads.editTitle")}</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">{t("aff.leads.labelAffiliate")}</label>
                   <input
@@ -426,7 +426,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">{t("aff.leads.labelStatus")}</label>
                   <select

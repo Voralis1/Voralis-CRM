@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const { email, password, name, role: rawRole } = await req.json().catch(() => ({}));
   if (!email || !password || !name)
-    return NextResponse.json({ message: "Champs manquants" }, { status: 400 });
+    return NextResponse.json({ message: "Missing fields" }, { status: 400 });
 
   // Choix à l'inscription : affiliate ou media_buyer uniquement.
   // Le rôle admin n'est JAMAIS attribuable via l'inscription (sécurité) — il se
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   });
   if (userErr || !userRes.user)
     return NextResponse.json(
-      { message: userErr?.message ?? "Échec de création du compte" },
+      { message: userErr?.message ?? "Account creation failed" },
       { status: 400 }
     );
   const userId = userRes.user.id;

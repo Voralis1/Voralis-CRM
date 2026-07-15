@@ -43,6 +43,7 @@ export function OrdersTable({ rows }: OrdersTableProps) {
           {rows.map((o) => {
             const meta = statusMeta(statuses, o.status);
             const affiliates = o.affiliate_network as any;
+            const product = o.project_products as any;
             const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
 
             return (
@@ -58,7 +59,7 @@ export function OrdersTable({ rows }: OrdersTableProps) {
                     {meta?.title ?? o.status}
                   </span>
                 </td>
-                <td className="td">{o.payout_amount != null ? formatProductPrice(o.payout_amount, o.country) : "—"}</td>
+                <td className="td">{product?.price != null ? formatProductPrice(product.price, o.country) : "—"}</td>
                 <td className="td">{fullName}</td>
                 <td className="td">{o.phone}</td>
                 <td className="td text-sm">{o.address ?? "—"}</td>
