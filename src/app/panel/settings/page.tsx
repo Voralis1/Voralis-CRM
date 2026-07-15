@@ -4,7 +4,11 @@ import { Icon } from "@/components/icons";
 import { savePostback, regenerateToken } from "./actions";
 import { getServerT } from "@/i18n/server";
 
-export default async function PanelSettings() {
+export default async function PanelSettings({
+  searchParams,
+}: {
+  searchParams?: { postback_error?: string };
+}) {
   const t = getServerT();
   const supabase = createClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -148,6 +152,9 @@ export default async function PanelSettings() {
           {"{lead_id} {status} {payout} {currency} {product_id} {country} {affiliate} {sub1}…{sub5} {timestamp}"}</code>
         </p>
         <form action={savePostback} className="space-y-3">
+          {searchParams?.postback_error && (
+            <p className="text-sm text-danger">{searchParams.postback_error}</p>
+          )}
           <input
             className="input font-mono text-xs"
             name="postback_url"
