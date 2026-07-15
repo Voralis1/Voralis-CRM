@@ -51,7 +51,7 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 | 409 | `DUPLICATE_LEAD` | doublon (même téléphone < 30 j) — `message` contient le `public_id` existant |
 | 500 | `SERVER` | échec de création |
 
-> Pays catalogue acceptés (`validation.ts`) : `AO, ML, SN, CI, GN, GA, CG, MA`. Devises dérivées (`src/lib/currency.ts`) : XOF, XAF, GNF, AOA, NGN selon le pays.
+> `country` n'est pas restreint à une liste : n'importe quel code ISO 3166-1 alpha-2/alpha-3 est accepté. `src/lib/currency.ts` résout la devise pour la quasi-totalité des pays du monde (couverture ISO 4217 complète, avec un mapping historique prioritaire pour les marchés Voralis : `SN, CI, ML, BF, TG` → XOF, `GAB, BZV` → XAF, `GN` → GNF, `AGO` → AOA, `NG` → NGN). Un pays totalement inconnu du mapping renvoie une devise vide (aucune erreur).
 
 ---
 
@@ -69,6 +69,32 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 }
 ```
 **404** `{ "success": false, "message": "Lead introuvable" }` · **401** si token absent.
+
+---
+
+### `GET /api/v1/leads?ids=...` — consulter plusieurs statuts d'un coup
+**Auth :** Bearer. `ids` = liste de `public_id` séparés par des virgules (déduplication + `trim()` côté serveur), max **100** par appel.
+
+`GET /api/v1/leads?ids=000035,000038,000041`
+
+**200**
+```json
+{
+  "success": true,
+  "leads": [
+    { "public_id": "000035", "status": "spam", "status_label": "Spam", "...": "..." },
+    { "public_id": "000038", "status": "confirmed", "status_label": "Confirmé", "...": "..." }
+  ],
+  "not_found": ["000041"]
+}
+```
+Mêmes champs que l'endpoint unitaire pour chaque élément de `leads` (`product_id`, `product`, `country`, `created_at`, `updated_at`, `affiliate`, `sub1`…`sub5`, `payout_amount`, `payout_currency`). `not_found` regroupe les IDs demandés introuvables **ou** n'appartenant pas à l'affilié (même traitement dans les deux cas, pour ne rien révéler sur l'existence d'un lead d'un tiers) — le filtre `affiliate_id` est appliqué directement dans la requête SQL, pas en post-traitement.
+
+**Erreurs**
+| HTTP | error_code | Cas |
+|------|------------|-----|
+| 401 | `AUTH` | token manquant/mal formé/inconnu |
+| 400 | `VALIDATION` | `ids` manquant/vide, ou plus de 100 IDs demandés |
 
 ---
 

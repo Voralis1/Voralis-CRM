@@ -2,6 +2,7 @@
 
 import { Icon } from "@/components/icons";
 import { useT } from "@/i18n/I18nProvider";
+import { downloadFile } from "@/lib/downloadFile";
 
 // Bouton de téléchargement du catalogue produits au format JSON
 // (prêt pour l'intégration API / CRM de l'affilié).
@@ -19,13 +20,7 @@ export default function DownloadJsonButton({
       return;
     }
     const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFile(new Blob([json], { type: "application/json;charset=utf-8;" }), filename);
   };
 
   return (

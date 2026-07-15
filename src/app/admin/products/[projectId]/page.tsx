@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatProductPrice, formatPayout, currencyLabelForCountry } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
+import { downloadFile } from "@/lib/downloadFile";
 
 interface Product {
   id: string;
@@ -165,12 +166,10 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
       p.workingHours, p.additionalInfo,
     ]);
     const csv = [headers, ...rows].map((row) => row.map((val) => `"${val ?? ""}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `produits-${project?.name || "export"}.csv`);
-    link.click();
+    downloadFile(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+      `produits-${project?.name || "export"}.csv`
+    );
   };
 
   const openNewProductModal = () => {

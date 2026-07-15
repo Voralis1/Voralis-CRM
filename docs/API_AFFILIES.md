@@ -35,7 +35,7 @@ Content-Type: application/json
 |----------------|:-----------:|----------------|
 | `first_name`   | ✅ | Prénom — 1 à 120 caractères. |
 | `phone`        | ✅ | 6 à 20 caractères. Caractères autorisés : chiffres, `+ ( ) . - espace`. |
-| `country`      | ✅ | Abréviation pays **2 à 3 lettres** : `SN, CI, BZV, ML, GN, AGO, GAB, BF, NG, TG`. |
+| `country`      | ✅ | Code pays **2 à 3 lettres** (ISO 3166-1). N'importe quel pays est accepté ; nos marchés principaux sont `SN, CI, BZV, ML, GN, AGO, GAB, BF, NG, TG`. |
 | `quantity`     | ✅ | Quantité — entier de 1 à 99. |
 | `affiliate`    | ✅ | Votre identifiant d'affilié (ex. `3379`). 1 à 255 caractères. |
 | `product_id`   | ✅* | **ID du produit (recommandé)** — prioritaire sur `product_name` si les deux sont envoyés. |
@@ -49,6 +49,8 @@ Content-Type: application/json
 | `comment`      | — | Note libre (contexte, remarques…) — ≤ 1000 caractères. |
 
 > **Champs obligatoires :** `first_name`, `phone`, `country`, `quantity`, `affiliate`, et **au moins un** de `product_id`/`product_name` (\* — omettre les deux renvoie une erreur `400 VALIDATION`).
+>
+> **Devise :** automatiquement déterminée à partir de `country` (couverture quasi mondiale — pas seulement nos marchés principaux). Un code pays non reconnu n'entraîne pas d'erreur, seule la devise affichée reste vide.
 
 **Produits** : récupérez la liste (ID + nom + pays + payout) depuis votre espace
 (bouton **Télécharger JSON** sur la page Produits). Mettez de préférence l'**ID** du
@@ -167,6 +169,30 @@ curl https://www.voralisnatural.com/api/v1/leads/000123 \
 ```
 
 Statuts possibles : `new, duplicate, trash, processing, no_answer, callback, confirmed, rejected, shipped, in_delivery, delivered, returned, cancelled`.
+
+### Suivre plusieurs leads en un seul appel — `GET /api/v1/leads?ids=...`
+
+Pour éviter de faire un appel par lead, vous pouvez interroger jusqu'à **100 IDs** d'un coup, séparés par des virgules :
+
+```bash
+curl "https://www.voralisnatural.com/api/v1/leads?ids=000123,000124,000125" \
+  -H "Authorization: Bearer VOTRE_TOKEN"
+```
+
+**Réponse — `200 OK`**
+
+```json
+{
+  "success": true,
+  "leads": [
+    { "public_id": "000123", "status": "confirmed", "status_label": "Confirmé", "...": "..." },
+    { "public_id": "000124", "status": "spam", "status_label": "Spam", "...": "..." }
+  ],
+  "not_found": ["000125"]
+}
+```
+
+Chaque élément de `leads` contient les mêmes champs que l'appel unitaire (§4). `not_found` liste les IDs demandés qui n'existent pas ou ne vous appartiennent pas. Au-delà de 100 IDs par appel, l'API renvoie une erreur `400 VALIDATION`.
 
 ---
 

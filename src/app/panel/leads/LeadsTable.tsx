@@ -5,6 +5,7 @@ import { updateOrder, createOrder, deleteOrder, fetchProducts } from "./actions"
 import { formatPayout } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
 import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
+import { downloadFile } from "@/lib/downloadFile";
 
 interface LeadsTableProps {
   rows: any[];
@@ -80,15 +81,10 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `leads-${new Date().toISOString().split("T")[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFile(
+      new Blob([csvContent], { type: "text/csv;charset=utf-8;" }),
+      `leads-${new Date().toISOString().split("T")[0]}.csv`
+    );
   };
 
   const handleCreateClick = async () => {

@@ -59,9 +59,11 @@ Content-Type: application/json
 >
 > `last_name`, `address` and `city` remain fully optional: a lead can be sent without them.
 
-### Country codes (VORALIS abbreviations)
+### Country codes and currencies
 
-The `country` field accepts a **2 to 3 letter** code. Preferably use the abbreviations below: they are recognized by the platform and determine the **currency** displayed.
+The `country` field accepts a **2 to 3 letter** code (ISO 3166-1 alpha-2 or alpha-3) — **any country in the world is accepted**, not just the ones below. The **currency** is automatically resolved from the country, with near-worldwide coverage (ISO 4217 codes).
+
+Our main markets, with their recommended abbreviations:
 
 | Code | Country | Currency |
 |---|---|---|
@@ -76,7 +78,7 @@ The `country` field accepts a **2 to 3 letter** code. Preferably use the abbrevi
 | `AGO` | Angola | Kz (Kwanza) |
 | `NG` | Nigeria | ₦ (Naira) |
 
-> Other 2–3 letter codes are still accepted, but the currency will not be displayed automatically if the code isn't in this list.
+> Any other country (e.g. `FR`, `US`, `MA`, `CD`…) has its official currency resolved automatically — no need to ask us to add it. Only a code matching no real country will show an empty currency, without causing an error.
 
 ### Example (cURL) — full payload
 
@@ -163,6 +165,30 @@ curl https://www.voralisnatural.com/api/v1/leads/000123 \
 ```
 
 Unknown lead → `404`.
+
+### Check multiple leads in one call — `GET /api/v1/leads?ids=...`
+
+To avoid one call per lead, you can query up to **100 IDs** at once, comma-separated:
+
+```bash
+curl "https://www.voralisnatural.com/api/v1/leads?ids=000123,000124,000125" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Batch response — `200 OK`
+
+```json
+{
+  "success": true,
+  "leads": [
+    { "public_id": "000123", "status": "confirmed", "status_label": "Confirmed", "...": "..." },
+    { "public_id": "000124", "status": "spam", "status_label": "Spam", "...": "..." }
+  ],
+  "not_found": ["000125"]
+}
+```
+
+Each item in `leads` has the same shape as the single-lead response above. `not_found` lists the requested IDs that don't exist or don't belong to you. Requesting more than 100 IDs returns `400 VALIDATION`.
 
 ---
 

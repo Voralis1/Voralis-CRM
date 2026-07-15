@@ -78,7 +78,12 @@ curl -X POST https://example.com/api/v1/leads \
 - Lead créé avec `status: "new"` et insertion dans `status_history`.
 
 ## Pays supportés
-Indicatif uniquement — tous les codes pays 2-3 lettres sont acceptés : `["AO","ML","SN","CI","GN","GA","CG","MA"]` sont reconnus pour l'affichage automatique de la devise.
+Tous les codes pays 2-3 lettres (ISO 3166-1) sont acceptés — pas seulement une liste restreinte. La devise est résolue automatiquement pour la quasi-totalité des pays du monde (couverture ISO 4217), avec une priorité historique sur les marchés principaux : `AO, ML, SN, CI, GN, GA, CG, MA`. Un code pays inconnu n'entraîne pas d'erreur, seule la devise affichée reste vide.
+
+## Consulter plusieurs leads — `GET /api/v1/leads?ids=...`
+- URL: `GET /api/v1/leads?ids=000123,000124,000125` (jusqu'à 100 IDs séparés par des virgules)
+- Réponse `200` : `{ success: true, leads: [...], not_found: [...] }` — `leads` contient les mêmes champs que la consultation unitaire (`GET /api/v1/leads/{id}`), `not_found` liste les IDs introuvables ou n'appartenant pas à l'affilié.
+- `400 VALIDATION` si `ids` est vide/manquant ou dépasse 100 éléments.
 
 ## Conseils d'intégration
 - Utiliser la méthode `POST` avec content-type JSON.

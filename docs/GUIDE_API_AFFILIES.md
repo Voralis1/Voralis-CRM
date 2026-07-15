@@ -53,10 +53,11 @@ Content-Type: application/json
 
 > \* `product_id` **ou** `product_name` est obligatoire — au moins l'un des deux doit être envoyé (les deux ensemble fonctionnent aussi, `product_id` étant alors prioritaire). Omettre les deux renvoie une erreur `400 VALIDATION`.
 
-### Codes pays (abréviations VORALIS)
+### Codes pays et devises
 
-Le champ `country` accepte un code de **2 à 3 lettres**. Utilisez de préférence les
-abréviations ci-dessous : elles sont reconnues par la plateforme et déterminent la **devise** affichée.
+Le champ `country` accepte un code de **2 à 3 lettres** (ISO 3166-1 alpha-2 ou alpha-3) — **n'importe quel pays du monde est accepté**, pas seulement ceux ci-dessous. La **devise** est déterminée automatiquement à partir du pays, avec une couverture quasi mondiale (codes ISO 4217).
+
+Nos marchés principaux, avec leurs abréviations recommandées :
 
 | Code | Pays | Devise |
 |------|------|--------|
@@ -71,8 +72,7 @@ abréviations ci-dessous : elles sont reconnues par la plateforme et déterminen
 | `AGO` | Angola | Kz (Kwanza) |
 | `NG` | Nigéria | ₦ (Naira) |
 
-> Un autre code de 2–3 lettres reste accepté, mais la devise ne sera pas affichée
-> automatiquement s'il ne figure pas dans cette liste.
+> Pour tout autre pays (ex. `FR`, `US`, `MA`, `CD`…), la devise officielle correspondante est résolue automatiquement — inutile de nous demander de l'ajouter. Seul un code totalement inconnu (pays inexistant) affichera une devise vide, sans provoquer d'erreur.
 
 ### Exemple (cURL)
 
@@ -143,6 +143,32 @@ curl https://VOTRE-DOMAINE.com/api/v1/leads/000123 \
 ```
 
 Lead inconnu → `404`.
+
+### Consulter plusieurs leads en un seul appel
+
+**`GET /api/v1/leads?ids=000123,000124,000125`**
+
+Jusqu'à **100 IDs** par appel, séparés par des virgules :
+
+```bash
+curl "https://VOTRE-DOMAINE.com/api/v1/leads?ids=000123,000124,000125" \
+  -H "Authorization: Bearer VOTRE_TOKEN"
+```
+
+### Réponse groupée — `200 OK`
+
+```json
+{
+  "success": true,
+  "leads": [
+    { "public_id": "000123", "status": "confirmed", "status_label": "Confirmé", "...": "..." },
+    { "public_id": "000124", "status": "spam", "status_label": "Spam", "...": "..." }
+  ],
+  "not_found": ["000125"]
+}
+```
+
+Chaque élément de `leads` a la même forme que la réponse unitaire ci-dessus. `not_found` liste les IDs demandés introuvables ou qui ne vous appartiennent pas. Au-delà de 100 IDs, l'API renvoie `400 VALIDATION`.
 
 ---
 

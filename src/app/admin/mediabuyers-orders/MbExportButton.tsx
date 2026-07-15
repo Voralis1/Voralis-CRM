@@ -3,6 +3,7 @@
 import { Icon } from "@/components/icons";
 import { useT } from "@/i18n/I18nProvider";
 import type { TFunc } from "@/i18n/dictionaries";
+import { downloadFile } from "@/lib/downloadFile";
 
 const buildHeaders = (t: TFunc): string[] => [
   t("adm.mbOrders.colId"),
@@ -38,18 +39,6 @@ function buildRows(rows: any[]): string[][] {
   });
 }
 
-function triggerDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -68,7 +57,7 @@ export default function MbExportButton({ rows }: { rows: any[] }) {
       `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">` +
       `<head><meta charset="UTF-8"></head>` +
       `<body><table border="1">${thead}${tbody}</table></body></html>`;
-    triggerDownload(
+    downloadFile(
       new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" }),
       `commandes-media-buyers-${date}.xls`
     );
