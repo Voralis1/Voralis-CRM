@@ -3,7 +3,7 @@
     { "path": "/api/internal/dispatch", "schedule": "0 3 * * *" }
   ],
   "rewrites": [
-    { "source": "/crm", "destination": "https://www.voralisnatural-crm.com" },
-    { "source": "/crm/:path*", "destination": "https://www.voralisnatural-crm.com/:path*" }
+    { "source": "/crm", "destination": "/" },
+    { "source": "/crm/:path*", "destination": "/:path*" }
   ]
 }
