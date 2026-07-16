@@ -11,6 +11,7 @@ interface OrdersTableProps {
   onToggleRow: (id: string) => void;
   onToggleAll: () => void;
   emptyMessageKey?: string;
+  onDeleteRow?: (id: string) => void;
 }
 
 export function OrdersTable({
@@ -20,6 +21,7 @@ export function OrdersTable({
   onToggleRow,
   onToggleAll,
   emptyMessageKey = "adm.orders.empty",
+  onDeleteRow,
 }: OrdersTableProps) {
   const t = useT();
 
@@ -50,6 +52,7 @@ export function OrdersTable({
             <th className="th">{t("adm.orders.colPhone")}</th>
             <th className="th">{t("adm.orders.colAddress")}</th>
             <th className="th">{t("adm.orders.colExtra")}</th>
+            {onDeleteRow && <th className="th">{t("adm.orders.colAction")}</th>}
           </tr>
         </thead>
         <tbody>
@@ -85,11 +88,24 @@ export function OrdersTable({
                 <td className="td">{o.phone}</td>
                 <td className="td text-sm">{o.address ?? "—"}</td>
                 <td className="td text-sm">{o.comment ?? "—"}</td>
+                {onDeleteRow && (
+                  <td className="td">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(t("adm.orders.deleteConfirm"))) onDeleteRow(o.id);
+                      }}
+                      className="text-xs font-medium text-danger hover:underline"
+                    >
+                      {t("adm.orders.delete")}
+                    </button>
+                  </td>
+                )}
               </tr>
             );
           })}
           {rows.length === 0 && (
-            <tr><td className="td text-center text-ink-muted" colSpan={13}>{t(emptyMessageKey)}</td></tr>
+            <tr><td className="td text-center text-ink-muted" colSpan={onDeleteRow ? 14 : 13}>{t(emptyMessageKey)}</td></tr>
           )}
         </tbody>
       </table>

@@ -93,6 +93,19 @@ export async function markOrdersExported(orderIds: string[]) {
   revalidatePath("/admin/orders-processing");
 }
 
+// Suppression définitive (status_history/postbacks liés sont supprimés en
+// cascade, cf. schema.sql). Réservé aux admins comme le reste du fichier.
+export async function deleteOrder(orderId: string) {
+  const userId = await requireStaff();
+  if (!userId) return;
+
+  const db = createAdminClient();
+  await db.from("orders").delete().eq("id", orderId);
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders-processing");
+}
+
 export interface BulkUpdateResult {
   updated: string[];
   notFound: string[];

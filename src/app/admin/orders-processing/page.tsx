@@ -17,5 +17,5 @@ export default async function OrdersProcessingPage() {
 
   const rows = orders ?? [];
 
-  return <OrdersBoardClient rows={rows} emptyMessageKey="adm.orders.processingEmpty" showStatusChart />;
+  return <OrdersBoardClient rows={rows} emptyMessageKey="adm.orders.processingEmpty" showStatusChart allowDelete />;
 }

@@ -60,6 +60,9 @@ export const admin: Record<string, Record<string, any>> = {
         movedToProcessing: "déplacée(s) vers « Commandes en traitement ».",
         processingEmpty: "Aucune commande exportée pour le moment.",
         statusBreakdown: "Répartition par statut",
+        colAction: "Action",
+        delete: "Supprimer",
+        deleteConfirm: "Supprimer définitivement cette commande ? Cette action est irréversible.",
       },
       mbOrders: {
         title: "Commandes des acheteurs d'espaces publicitaires",
@@ -377,6 +380,9 @@ export const admin: Record<string, Record<string, any>> = {
         movedToProcessing: "moved to \"Orders in processing\".",
         processingEmpty: "No exported orders yet.",
         statusBreakdown: "Breakdown by status",
+        colAction: "Action",
+        delete: "Delete",
+        deleteConfirm: "Permanently delete this order? This action cannot be undone.",
       },
       mbOrders: {
         title: "Media buyer orders",
@@ -694,6 +700,9 @@ export const admin: Record<string, Record<string, any>> = {
         movedToProcessing: "movido(s) para \"Pedidos em processamento\".",
         processingEmpty: "Nenhum pedido exportado por enquanto.",
         statusBreakdown: "Distribuição por status",
+        colAction: "Ação",
+        delete: "Excluir",
+        deleteConfirm: "Excluir definitivamente este pedido? Esta ação não pode ser desfeita.",
       },
       mbOrders: {
         title: "Pedidos dos compradores de mídia",
@@ -1011,6 +1020,9 @@ export const admin: Record<string, Record<string, any>> = {
         movedToProcessing: "перемещено в «Заказы в обработке».",
         processingEmpty: "Пока нет экспортированных заказов.",
         statusBreakdown: "Распределение по статусам",
+        colAction: "Действие",
+        delete: "Удалить",
+        deleteConfirm: "Удалить эту заявку без возможности восстановления?",
       },
       mbOrders: {
         title: "Заказы медиабайеров",

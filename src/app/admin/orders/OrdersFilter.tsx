@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
+import type { OrderStatusRow } from "@/lib/orderStatus";
 
 interface OrdersFilterProps {
   onFiltersChange: (filters: OrderFilters) => void;
+  statuses: OrderStatusRow[];
 }
 
 export interface OrderFilters {
@@ -17,7 +19,7 @@ export interface OrderFilters {
   phone: string;
 }
 
-export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
+export function OrdersFilter({ onFiltersChange, statuses }: OrdersFilterProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<OrderFilters>({
@@ -113,13 +115,18 @@ export function OrdersFilter({ onFiltersChange }: OrdersFilterProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <input
-          type="text"
-          placeholder={t("adm.orders.phStatus")}
+        <select
           value={filters.status}
           onChange={(e) => handleChange("status", e.target.value)}
           className="input text-sm"
-        />
+        >
+          <option value="">{t("adm.orders.phStatus")}</option>
+          {statuses.map((s) => (
+            <option key={s.slug} value={s.slug}>
+              {s.title}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           placeholder={t("adm.orders.phFullName")}

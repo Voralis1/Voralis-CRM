@@ -5,7 +5,7 @@ import { useT } from "@/i18n/I18nProvider";
 import { ExportButton } from "./ExportButton";
 import { OrdersFilter, OrderFilters } from "./OrdersFilter";
 import { OrdersTable } from "./OrdersTable";
-import { bulkChangeStatus, markOrdersExported } from "./actions";
+import { bulkChangeStatus, markOrdersExported, deleteOrder } from "./actions";
 import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
 import PieChart from "@/components/PieChart";
 
@@ -13,9 +13,10 @@ interface OrdersBoardClientProps {
   rows: any[];
   emptyMessageKey?: string;
   showStatusChart?: boolean;
+  allowDelete?: boolean;
 }
 
-export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusChart }: OrdersBoardClientProps) {
+export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusChart, allowDelete }: OrdersBoardClientProps) {
   const t = useT();
   const [filters, setFilters] = useState<OrderFilters>({
     public_id: "",
@@ -32,6 +33,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const [isApplying, startApplying] = useTransition();
   const [, startMoving] = useTransition();
+  const [, startDeleting] = useTransition();
 
   useEffect(() => {
     fetch("/api/admin/statuses", { cache: "no-store" })
@@ -54,7 +56,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
       (!filters.product || (o.product || "").toLowerCase().includes(filters.product.toLowerCase())) &&
       (!filters.country || (o.country || "").toLowerCase().includes(filters.country.toLowerCase())) &&
       (!filters.affiliate_name || (affiliates?.name || "").toLowerCase().includes(filters.affiliate_name.toLowerCase())) &&
-      (!filters.status || o.status.toLowerCase().includes(filters.status.toLowerCase())) &&
+      (!filters.status || o.status === filters.status) &&
       (!filters.first_name || fullName.toLowerCase().includes(filters.first_name.toLowerCase())) &&
       (!filters.phone || o.phone.toLowerCase().includes(filters.phone.toLowerCase()))
     );
@@ -125,6 +127,18 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
     });
   };
 
+  const handleDelete = (id: string) => {
+    startDeleting(async () => {
+      await deleteOrder(id);
+      setSelectedIds((current) => {
+        if (!current.has(id)) return current;
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -183,7 +197,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
         </div>
       )}
 
-      <OrdersFilter onFiltersChange={setFilters} />
+      <OrdersFilter onFiltersChange={setFilters} statuses={statuses} />
 
       <OrdersTable
         rows={filteredRows}
@@ -192,6 +206,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
         onToggleRow={toggleRow}
         onToggleAll={toggleAll}
         emptyMessageKey={emptyMessageKey}
+        onDeleteRow={allowDelete ? handleDelete : undefined}
       />
     </div>
   );
