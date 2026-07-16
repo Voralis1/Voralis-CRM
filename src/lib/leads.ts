@@ -2,9 +2,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { nextOrderPublicId } from "@/lib/orderId";
 import type { LeadInput } from "@/lib/validation";
 
-// Fenêtre de déduplication sur le téléphone (jours).
-export const DEDUP_WINDOW_DAYS = 30;
-
 export type IngestResult =
   | { ok: true; lead_id: string; status: string }
   | { ok: false; code: number; error_code: string; message: string };
@@ -18,20 +15,7 @@ export async function ingestLead(
 ): Promise<IngestResult> {
   const db = createAdminClient();
 
-  // 1) Déduplication sur le téléphone
-  const since = new Date(Date.now() - DEDUP_WINDOW_DAYS * 86400_000).toISOString();
-  const { data: dup } = await db
-    .from("orders")
-    .select("public_id")
-    .eq("phone", lead.phone)
-    .neq("status", "trash")
-    .gte("created_at", since)
-    .limit(1)
-    .maybeSingle();
-  if (dup)
-    return { ok: false, code: 409, error_code: "DUPLICATE_LEAD", message: `Lead déjà existant (${dup.public_id})` };
-
-  // 3a) Produit : l'affilié peut envoyer product_id (recommandé, plus fiable)
+  // Produit : l'affilié peut envoyer product_id (recommandé, plus fiable)
   //     OU product_name (nom exact, insensible à la casse). product_id est
   //     prioritaire si les deux sont fournis. La commission (payout, toujours
   //     en dollars) est récupérée du produit trouvé. Aucune correspondance ->
@@ -72,7 +56,7 @@ export async function ingestLead(
     }
   }
 
-  // 4) Insertion avec un identifiant public numérique (retry si collision).
+  // Insertion avec un identifiant public numérique (retry si collision).
   const baseRow = {
     affiliate_id: affiliateId,
     product_id: productId,

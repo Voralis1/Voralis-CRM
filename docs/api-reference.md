@@ -6,7 +6,7 @@ Trois familles d'endpoints :
 2. **API back-office** (`/api/admin/*`, `/api/signup`) — auth par **session Supabase** (cookies), protégée par le middleware.
 3. **Interne** (`/api/internal/dispatch`) — auth par **`CRON_SECRET`**.
 
-Codes d'erreur applicatifs : `AUTH`, `VALIDATION`, `BAD_JSON`, `DUPLICATE_LEAD`, `SERVER`.
+Codes d'erreur applicatifs : `AUTH`, `VALIDATION`, `BAD_JSON`, `SERVER`.
 
 ---
 
@@ -48,7 +48,6 @@ Champs (validés par zod, `src/lib/validation.ts`) :
 | 403 | `AUTH` | compte affilié suspendu |
 | 400 | `BAD_JSON` | corps JSON invalide |
 | 400 | `VALIDATION` | champs invalides (`details` fourni) |
-| 409 | `DUPLICATE_LEAD` | doublon (même téléphone < 30 j) — `message` contient le `public_id` existant |
 | 500 | `SERVER` | échec de création |
 
 > `country` n'est pas restreint à une liste : n'importe quel code ISO 3166-1 alpha-2/alpha-3 est accepté. `src/lib/currency.ts` résout la devise pour la quasi-totalité des pays du monde (couverture ISO 4217 complète, avec un mapping historique prioritaire pour les marchés Voralis : `SN, CI, ML, BF, TG` → XOF, `GAB, BZV` → XAF, `GN` → GNF, `AGO` → AOA, `NG` → NGN). Un pays totalement inconnu du mapping renvoie une devise vide (aucune erreur).
@@ -141,11 +140,12 @@ En amont, `leadSchema.safeParse` (`src/lib/validation.ts`) valide le payload —
 
 `src/lib/leads.ts` → `ingestLead(affiliateId, lead)` :
 
-1. **Déduplication** : recherche par `phone` sur `orders` (hors `trash`) sur **30 jours** glissants → `DUPLICATE_LEAD` (409) si trouvé.
-2. **Résolution produit** : lookup exact par `product_id` (fallback `product_name` par `ilike` sinon). Si trouvé dans `project_products` → `product_id`/nom canonique + `price` posé comme `payout_amount` (USD). Sans correspondance, la valeur reçue est conservée en texte libre dans `product` et `product_id` reste `null` (contrainte FK).
-3. **Insertion** : `public_id` via `nextOrderPublicId()` (6 chiffres, retry 4×), statut initial `new`.
-4. **Historique** : ligne `status_history` (`from=null`, `to=new`, note « Lead reçu via API »).
-5. **Sous-affilié** : upsert dans `affiliate` `(network_id, name)`.
+1. **Résolution produit** : lookup exact par `product_id` (fallback `product_name` par `ilike` sinon). Si trouvé dans `project_products` → `product_id`/nom canonique + `price` posé comme `payout_amount` (USD). Sans correspondance, la valeur reçue est conservée en texte libre dans `product` et `product_id` reste `null` (contrainte FK).
+2. **Insertion** : `public_id` via `nextOrderPublicId()` (6 chiffres, retry 4×), statut initial `new`.
+3. **Historique** : ligne `status_history` (`from=null`, `to=new`, note « Lead reçu via API »).
+4. **Sous-affilié** : upsert dans `affiliate` `(network_id, name)`.
+
+> Aucune déduplication automatique par téléphone : chaque appel `POST /api/v1/leads` crée un nouveau lead, y compris avec un numéro déjà vu récemment. À gérer côté affilié si besoin.
 
 ---
 

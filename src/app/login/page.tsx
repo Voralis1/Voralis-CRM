@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import AuthSplit from "@/components/AuthSplit";
 
@@ -67,7 +68,7 @@ function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-ink-muted">
         Don't have an account yet?{" "}
-        <a className="font-medium text-accent hover:underline" href="/signup">Sign up</a>
+        <Link className="font-medium text-accent hover:underline" href="/signup">Sign up</Link>
       </p>
     </div>
   );

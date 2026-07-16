@@ -68,13 +68,12 @@ curl -X POST https://example.com/api/v1/leads \
 - `400` — JSON invalide / validation échouée (voir `details`).
 - `401` — Token manquant ou invalide.
 - `403` — Compte affilié suspendu.
-- `409` — Doublon (lead existant sur téléphone dans 30 derniers jours).
 - `500` — Erreur serveur.
 
 ## Comportement serveur
 - L'affilié ne doit pas fournir `affiliate_id` — il est déduit depuis le token (`Authorization: Bearer`). Le champ `affiliate` est un identifiant libre de sous-affilié/source, distinct du token.
 - `product_id` est résolu en priorité contre le catalogue produits, avec repli sur `product_name` (nom exact) si non fourni ou non trouvé ; sans correspondance, la valeur reçue est conservée en texte libre et le payout reste vide.
-- Déduplication: recherche par `phone` sur les 30 derniers jours (ignore `trash`).
+- Aucune déduplication automatique par téléphone : chaque appel crée un nouveau lead.
 - Lead créé avec `status: "new"` et insertion dans `status_history`.
 
 ## Pays supportés

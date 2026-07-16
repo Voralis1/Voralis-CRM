@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import AuthSplit from "@/components/AuthSplit";
 
 export default function SignupPage() {
@@ -80,7 +81,7 @@ export default function SignupPage() {
         </button>
         <p className="mt-6 text-center text-sm text-ink-muted">
           Already registered?{" "}
-          <a className="font-medium text-accent hover:underline" href="/login">Log in</a>
+          <Link className="font-medium text-accent hover:underline" href="/login">Log in</Link>
         </p>
       </div>
     </AuthSplit>

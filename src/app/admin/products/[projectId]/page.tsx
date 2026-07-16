@@ -140,9 +140,10 @@ export default function ProjectDetailsPage({ params }: ProjectPageProps) {
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm(t("adm.products.confirmDeleteProduct"))) return;
     try {
-      const response = await fetch(`/api/admin/projects/${encodeURIComponent(projectId)}/products/${encodeURIComponent(productId)}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/projects/${encodeURIComponent(projectId)}/products/${encodeURIComponent(productId)}`,
+        { method: "DELETE" }
+      );
       if (!response.ok) throw new Error(t("adm.products.errDelete"));
       await fetchProject();
     } catch (err) {

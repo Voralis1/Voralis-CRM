@@ -247,7 +247,6 @@ https://votre-tracker.com/postback?clickid={sub3}&status={status}&payout={payout
 | `400` | JSON invalide ou champs non conformes (voir `details`) |
 | `401` | Token manquant ou invalide |
 | `403` | Compte affilié suspendu |
-| `409` | Doublon (même téléphone déjà envoyé récemment) |
 | `500` | Erreur serveur — réessayez plus tard |
 
 ### Format d'erreur
@@ -261,13 +260,13 @@ https://votre-tracker.com/postback?clickid={sub3}&status={status}&payout={payout
 }
 ```
 
-Codes d'erreur : `AUTH`, `VALIDATION`, `BAD_JSON`, `DUPLICATE_LEAD`, `SERVER`.
+Codes d'erreur : `AUTH`, `VALIDATION`, `BAD_JSON`, `SERVER`.
 
 ---
 
 ## 8. Règles importantes
 
-- **Anti-doublon :** un lead avec le **même numéro de téléphone** envoyé dans les **30 derniers jours** est refusé (`409`). Vérifiez côté source pour éviter les rejets.
+- **Pas de déduplication automatique :** un même numéro de téléphone envoyé plusieurs fois crée autant de leads distincts. Filtrez côté source si vous voulez éviter les doublons involontaires.
 - **Téléphone :** privilégiez le **format international** (ex. `+221770000000`) pour une meilleure joignabilité.
 - **`affiliate` :** utilisez un identifiant stable par campagne/source — il vous sert à segmenter vos stats et revient dans les postbacks.
 - **Sécurité :** gardez votre token secret. En cas de fuite, régénérez-le depuis votre espace (l'ancien devient immédiatement invalide).

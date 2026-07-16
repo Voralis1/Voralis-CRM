@@ -151,11 +151,10 @@ Conservez `lead_id` : il permet de suivre le statut du lead (§4) et il est renv
 | 403  | `AUTH`           | Compte affilié suspendu | Nous contacter. |
 | 400  | `VALIDATION`     | Un champ est manquant ou mal formé | Corriger selon `details`. |
 | 400  | `BAD_JSON`       | Corps JSON illisible | Vérifier le `Content-Type` et le JSON. |
-| 409  | `DUPLICATE_LEAD` | Téléphone déjà reçu il y a **moins de 30 jours** | Ne pas renvoyer ; gérer comme doublon. |
 | 500  | `SERVER`         | Erreur interne | Réessayer plus tard. |
 
 **Bonnes pratiques :**
-- Traitez **409** comme un doublon (ne pas boucler).
+- Aucune déduplication automatique côté Voralis : un même numéro de téléphone renvoyé plusieurs fois crée autant de leads distincts. Filtrez côté source si vous voulez éviter les doublons involontaires.
 - En cas de **5xx** ou de timeout, réessayez avec un léger délai (backoff).
 - Un lead accepté démarre toujours au statut `new`.
 
@@ -279,5 +278,4 @@ En cas d'erreur : `{ "status": "error", "error_code": "...", "message": "..." }`
 
 1. On vous donne **un token**.
 2. Vous faites un `POST /api/v1/leads` avec `Authorization: Bearer <token>` et le JSON du lead (obligatoires : `first_name`, `phone`, `country`, `quantity`, `affiliate`, et `product_id` ou `product_name`).
-3. Un téléphone déjà vu < 30 j est refusé (409).
-4. Vous recevez un `lead_id` ; suivez le statut via l'API ou par postback.
+3. Vous recevez un `lead_id` ; suivez le statut via l'API ou par postback.

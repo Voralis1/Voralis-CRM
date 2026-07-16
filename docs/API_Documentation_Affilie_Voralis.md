@@ -266,7 +266,6 @@ https://your-tracker.com/postback?clickid={sub3}&status={status}&payout={payout}
 | `400` | Invalid JSON or non-compliant fields (see `details`) |
 | `401` | Missing or invalid token |
 | `403` | Suspended affiliate account |
-| `409` | Duplicate (same phone number already sent recently) |
 | `500` | Server error — please retry later |
 
 ### Error format
@@ -280,13 +279,13 @@ https://your-tracker.com/postback?clickid={sub3}&status={status}&payout={payout}
 }
 ```
 
-Error codes: `AUTH`, `VALIDATION`, `BAD_JSON`, `DUPLICATE_LEAD`, `SERVER`.
+Error codes: `AUTH`, `VALIDATION`, `BAD_JSON`, `SERVER`.
 
 ---
 
 ## 8. Important rules
 
-- **Duplicate prevention:** a lead with the **same phone number** submitted within the last **30 days** is rejected (`409`). Filter on your end to avoid rejections.
+- **No automatic deduplication:** sending the same phone number multiple times creates that many distinct leads. Filter on your end if you want to avoid unintentional duplicates.
 - **Phone number:** prefer the **international format** (e.g. `+221770000000`) for better reachability.
 - **`affiliate`:** use a stable identifier per campaign/source — it's used to segment your stats and is returned in postbacks.
 - **Security:** keep your token secret. If it's ever leaked, regenerate it from your dashboard (the old one becomes invalid immediately).
