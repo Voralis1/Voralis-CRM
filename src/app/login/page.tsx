@@ -32,12 +32,6 @@ function LoginForm() {
 
   return (
     <div>
-      {/* Logo (visible surtout sur mobile, où le panneau gauche est masqué) */}
-      <div className="mb-8 lg:hidden">
-        <div className="text-2xl font-extrabold tracking-[0.2em] text-ink">VORALIS</div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">COD Enterprise</div>
-      </div>
-
       <h1 className="text-2xl font-bold text-ink">Log in</h1>
       <p className="mb-6 mt-1 text-sm text-ink-muted">Access your VORALIS workspace.</p>
 

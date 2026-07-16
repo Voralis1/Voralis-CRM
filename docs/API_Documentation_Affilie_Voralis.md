@@ -73,9 +73,9 @@ Our main markets, with their recommended abbreviations:
 | `BF` | Burkina Faso | FCFA (XOF) |
 | `TG` | Togo | FCFA (XOF) |
 | `GN` | Guinea | GNF |
-| `GAB` | Gabon | FCFA (XAF) |
-| `BZV` | Congo-Brazzaville | FCFA (XAF) |
-| `AGO` | Angola | Kz (Kwanza) |
+| `GB` | Gabon | FCFA (XAF) |
+| `CG` | Congo-Brazzaville | FCFA (XAF) |
+| `AO` | Angola | Kz (Kwanza) |
 | `NG` | Nigeria | ₦ (Naira) |
 
 > Any other country (e.g. `FR`, `US`, `MA`, `CD`…) has its official currency resolved automatically — no need to ask us to add it. Only a code matching no real country will show an empty currency, without causing an error.
