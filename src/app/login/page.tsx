@@ -48,10 +48,17 @@ function LoginForm() {
       )}
 
       <label className="label">Email</label>
-      <input className="input mb-3" value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
+      <input
+        className="input mb-3"
+        style={{ fontSize: 16 }}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        type="email"
+      />
       <label className="label">Password</label>
       <input
         className="input mb-4"
+        style={{ fontSize: 16 }}
         value={pwd}
         onChange={(e) => setPwd(e.target.value)}
         type="password"

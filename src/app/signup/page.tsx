@@ -45,6 +45,7 @@ export default function SignupPage() {
         <label className="label">Account type</label>
         <select
           className="input mb-3"
+          style={{ fontSize: 16 }}
           value={role}
           onChange={(e) => setRole(e.target.value as "affiliate" | "media_buyer")}
         >
@@ -53,12 +54,24 @@ export default function SignupPage() {
         </select>
 
         <label className="label">Name / Company</label>
-        <input className="input mb-3" value={name} onChange={(e) => setName(e.target.value)} />
+        <input
+          className="input mb-3"
+          style={{ fontSize: 16 }}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
         <label className="label">Email</label>
-        <input className="input mb-3" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input
+          className="input mb-3"
+          style={{ fontSize: 16 }}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         <label className="label">Password</label>
         <input
           className="input mb-4"
+          style={{ fontSize: 16 }}
           type="password"
           value={pwd}
           onChange={(e) => setPwd(e.target.value)}

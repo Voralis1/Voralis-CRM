@@ -9,7 +9,7 @@ const FEATURES: { icon: IconName; title: string; desc: string }[] = [
 // Mise en page d'authentification : panneau visuel à gauche, formulaire à droite.
 export default function AuthSplit({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-base">
+    <div className="flex min-h-dvh bg-base">
       {/* Panneau visuel (gauche) */}
       <div
         className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-12 text-white lg:flex"
@@ -56,7 +56,7 @@ export default function AuthSplit({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Formulaire (droite) */}
-      <div className="flex w-full items-center justify-center p-6 lg:w-1/2">
+      <div className="flex w-full items-start justify-center overflow-y-auto p-4 pt-10 sm:items-center sm:p-6 sm:pt-6 lg:w-1/2">
         <div className="w-full max-w-sm">{children}</div>
       </div>
     </div>
