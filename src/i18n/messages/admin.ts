@@ -53,6 +53,10 @@ export const admin: Record<string, Record<string, any>> = {
         exportCsvTitle: "Télécharger au format CSV",
         exportCsv: "CSV",
         hStatus: "Status",
+        selectedSuffix: "sélectionnée(s) — l'export ne portera que sur la sélection",
+        clearSelection: "Tout désélectionner",
+        selectAllAria: "Tout sélectionner",
+        selectRowAria: "Sélectionner cette commande",
       },
       mbOrders: {
         title: "Commandes des acheteurs d'espaces publicitaires",
@@ -363,6 +367,10 @@ export const admin: Record<string, Record<string, any>> = {
         exportCsvTitle: "Download as CSV",
         exportCsv: "CSV",
         hStatus: "Status",
+        selectedSuffix: "selected — export will only include the selection",
+        clearSelection: "Clear selection",
+        selectAllAria: "Select all",
+        selectRowAria: "Select this order",
       },
       mbOrders: {
         title: "Media buyer orders",
@@ -673,6 +681,10 @@ export const admin: Record<string, Record<string, any>> = {
         exportCsvTitle: "Baixar em CSV",
         exportCsv: "CSV",
         hStatus: "Status",
+        selectedSuffix: "selecionado(s) — a exportação incluirá apenas a seleção",
+        clearSelection: "Limpar seleção",
+        selectAllAria: "Selecionar tudo",
+        selectRowAria: "Selecionar este pedido",
       },
       mbOrders: {
         title: "Pedidos dos compradores de mídia",
@@ -983,6 +995,10 @@ export const admin: Record<string, Record<string, any>> = {
         exportCsvTitle: "Скачать в CSV",
         exportCsv: "CSV",
         hStatus: "Статус",
+        selectedSuffix: "выбрано — экспорт затронет только выбранные",
+        clearSelection: "Снять выделение",
+        selectAllAria: "Выбрать всё",
+        selectRowAria: "Выбрать эту заявку",
       },
       mbOrders: {
         title: "Заказы медиабайеров",
