@@ -76,6 +76,23 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   revalidatePath("/panel/leads");
 }
 
+// Marque des commandes comme exportées : elles quittent /admin/orders et
+// apparaissent dans /admin/orders-processing (aller simple, pas de retour
+// automatique — cf. migration add_orders_exported_at.sql).
+export async function markOrdersExported(orderIds: string[]) {
+  const userId = await requireStaff();
+  if (!userId || orderIds.length === 0) return;
+
+  const db = createAdminClient();
+  await db
+    .from("orders")
+    .update({ exported_at: new Date().toISOString() })
+    .in("id", orderIds);
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders-processing");
+}
+
 export interface BulkUpdateResult {
   updated: string[];
   notFound: string[];

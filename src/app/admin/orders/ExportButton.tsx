@@ -9,6 +9,9 @@ import { formatProductPrice } from "@/lib/currency";
 
 interface ExportButtonProps {
   rows: any[];
+  // Appelé après un export Excel réussi (pas CSV) — laissé à `undefined`
+  // quand `rows` ne correspond pas à une sélection explicite de l'utilisateur.
+  onExcelExported?: (rows: any[]) => void;
 }
 
 const buildHeaders = (t: TFunc): string[] => [
@@ -48,7 +51,7 @@ function buildRows(rows: any[]): string[][] {
   });
 }
 
-export function ExportButton({ rows }: ExportButtonProps) {
+export function ExportButton({ rows, onExcelExported }: ExportButtonProps) {
   const t = useT();
   const HEADERS = buildHeaders(t);
   const date = new Date().toISOString().split("T")[0];
@@ -57,6 +60,7 @@ export function ExportButton({ rows }: ExportButtonProps) {
   const exportExcel = async () => {
     const blob = await buildExcelBlob(HEADERS, body, "Leads");
     downloadFile(blob, `leads-${date}.xlsx`);
+    onExcelExported?.(rows);
   };
 
   const exportCsv = () => {

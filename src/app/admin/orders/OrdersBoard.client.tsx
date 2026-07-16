@@ -5,14 +5,17 @@ import { useT } from "@/i18n/I18nProvider";
 import { ExportButton } from "./ExportButton";
 import { OrdersFilter, OrderFilters } from "./OrdersFilter";
 import { OrdersTable } from "./OrdersTable";
-import { bulkChangeStatus } from "./actions";
-import type { OrderStatusRow } from "@/lib/orderStatus";
+import { bulkChangeStatus, markOrdersExported } from "./actions";
+import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
+import PieChart from "@/components/PieChart";
 
 interface OrdersBoardClientProps {
   rows: any[];
+  emptyMessageKey?: string;
+  showStatusChart?: boolean;
 }
 
-export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
+export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusChart }: OrdersBoardClientProps) {
   const t = useT();
   const [filters, setFilters] = useState<OrderFilters>({
     public_id: "",
@@ -28,6 +31,7 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
   const [bulkStatus, setBulkStatus] = useState("");
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const [isApplying, startApplying] = useTransition();
+  const [, startMoving] = useTransition();
 
   useEffect(() => {
     fetch("/api/admin/statuses", { cache: "no-store" })
@@ -76,6 +80,15 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
   const selectedRows = filteredRows.filter((o) => selectedIds.has(o.id));
   const exportRows = selectedRows.length > 0 ? selectedRows : filteredRows;
 
+  const statusChartData = Object.values(
+    filteredRows.reduce<Record<string, { label: string; value: number }>>((acc, o) => {
+      const label = statusMeta(statuses, o.status)?.title ?? o.status;
+      acc[o.status] ??= { label, value: 0 };
+      acc[o.status].value += 1;
+      return acc;
+    }, {})
+  );
+
   const applyBulkStatus = () => {
     if (selectedRows.length === 0 || !bulkStatus) return;
     setBulkMessage(null);
@@ -93,6 +106,22 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
       } else {
         setBulkMessage(res.error ?? t("adm.bulk.failed"));
       }
+    });
+  };
+
+  // N'est câblé que lorsque l'export Excel porte sur une sélection explicite
+  // (voir ExportButton ci-dessous) : sinon un export "toutes les commandes
+  // filtrées" viderait accidentellement la liste principale.
+  const handleExcelExportedSelection = (exportedRows: any[]) => {
+    const ids = exportedRows.map((o) => o.id);
+    startMoving(async () => {
+      await markOrdersExported(ids);
+      setSelectedIds(new Set());
+      setBulkMessage(
+        `${exportedRows.length} ${
+          exportedRows.length > 1 ? t("adm.bulk.orderPlural") : t("adm.bulk.orderSingular")
+        } ${t("adm.orders.movedToProcessing")}`
+      );
     });
   };
 
@@ -115,8 +144,18 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
             </>
           )}
         </div>
-        <ExportButton rows={exportRows} />
+        <ExportButton
+          rows={exportRows}
+          onExcelExported={selectedRows.length > 0 ? handleExcelExportedSelection : undefined}
+        />
       </div>
+
+      {showStatusChart && (
+        <div className="card p-4">
+          <h2 className="mb-3 text-sm font-semibold text-ink">{t("adm.orders.statusBreakdown")}</h2>
+          <PieChart data={statusChartData} />
+        </div>
+      )}
 
       {selectedRows.length > 0 && (
         <div className="card flex flex-wrap items-center gap-2 p-3">
@@ -152,6 +191,7 @@ export default function OrdersBoardClient({ rows }: OrdersBoardClientProps) {
         selectedIds={selectedIds}
         onToggleRow={toggleRow}
         onToggleAll={toggleAll}
+        emptyMessageKey={emptyMessageKey}
       />
     </div>
   );

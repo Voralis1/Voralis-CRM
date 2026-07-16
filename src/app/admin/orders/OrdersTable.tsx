@@ -10,9 +10,17 @@ interface OrdersTableProps {
   selectedIds: Set<string>;
   onToggleRow: (id: string) => void;
   onToggleAll: () => void;
+  emptyMessageKey?: string;
 }
 
-export function OrdersTable({ rows, statuses, selectedIds, onToggleRow, onToggleAll }: OrdersTableProps) {
+export function OrdersTable({
+  rows,
+  statuses,
+  selectedIds,
+  onToggleRow,
+  onToggleAll,
+  emptyMessageKey = "adm.orders.empty",
+}: OrdersTableProps) {
   const t = useT();
 
   const allSelected = rows.length > 0 && rows.every((o) => selectedIds.has(o.id));
@@ -81,7 +89,7 @@ export function OrdersTable({ rows, statuses, selectedIds, onToggleRow, onToggle
             );
           })}
           {rows.length === 0 && (
-            <tr><td className="td text-center text-ink-muted" colSpan={13}>{t("adm.orders.empty")}</td></tr>
+            <tr><td className="td text-center text-ink-muted" colSpan={13}>{t(emptyMessageKey)}</td></tr>
           )}
         </tbody>
       </table>

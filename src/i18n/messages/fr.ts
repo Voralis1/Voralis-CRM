@@ -30,6 +30,7 @@ export const fr = {
     // Back-office (admin)
     dashboard: "Tableau de bord",
     orders: "Commandes des affiliés",
+    ordersProcessing: "Commandes en traitement",
     mbOrders: "Commandes des acheteurs d'espaces publicitaires",
     myOrders: "Mes commandes",
     bulkUpdate: "Mise à jour",
@@ -50,6 +51,7 @@ export const fr = {
   navSub: {
     dashboard: "Vue globale & KPI",
     orders: "Leads & statuts",
+    ordersProcessing: "Commandes déjà exportées",
     mbOrders: "Commandes des acheteurs d'espaces",
     bulkUpdate: "Mise à jour en masse",
     products: "Catalogue & projets",

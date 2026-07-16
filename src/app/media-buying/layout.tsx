@@ -17,6 +17,7 @@ export default async function MediaBuyingLayout({ children }: { children: React.
     { href: "/media-buying/orders", label: t("nav.myOrders"), subtitle: t("navSub.myOrders"), icon: "list" },
     { href: "/media-buying/spend", label: t("nav.adSpend"), subtitle: t("navSub.adSpend"), icon: "wallet" },
     { href: "/media-buying/results", label: t("nav.results"), subtitle: t("navSub.results"), icon: "chart" },
+    { href: "/media-buying/account", label: t("nav.account"), subtitle: t("navSub.account"), icon: "user" },
   ];
 
   return (

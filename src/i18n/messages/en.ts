@@ -27,6 +27,7 @@ export const en: DeepPartial<Messages> = {
   nav: {
     dashboard: "Dashboard",
     orders: "Affiliate orders",
+    ordersProcessing: "Orders in processing",
     mbOrders: "Media buyer orders",
     myOrders: "My orders",
     bulkUpdate: "Bulk update",
@@ -46,6 +47,7 @@ export const en: DeepPartial<Messages> = {
   navSub: {
     dashboard: "Overview & KPIs",
     orders: "Leads & statuses",
+    ordersProcessing: "Already exported orders",
     mbOrders: "Media buyer orders",
     bulkUpdate: "Bulk status update",
     products: "Catalog & projects",

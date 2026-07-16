@@ -57,6 +57,9 @@ export const admin: Record<string, Record<string, any>> = {
         clearSelection: "Tout désélectionner",
         selectAllAria: "Tout sélectionner",
         selectRowAria: "Sélectionner cette commande",
+        movedToProcessing: "déplacée(s) vers « Commandes en traitement ».",
+        processingEmpty: "Aucune commande exportée pour le moment.",
+        statusBreakdown: "Répartition par statut",
       },
       mbOrders: {
         title: "Commandes des acheteurs d'espaces publicitaires",
@@ -371,6 +374,9 @@ export const admin: Record<string, Record<string, any>> = {
         clearSelection: "Clear selection",
         selectAllAria: "Select all",
         selectRowAria: "Select this order",
+        movedToProcessing: "moved to \"Orders in processing\".",
+        processingEmpty: "No exported orders yet.",
+        statusBreakdown: "Breakdown by status",
       },
       mbOrders: {
         title: "Media buyer orders",
@@ -685,6 +691,9 @@ export const admin: Record<string, Record<string, any>> = {
         clearSelection: "Limpar seleção",
         selectAllAria: "Selecionar tudo",
         selectRowAria: "Selecionar este pedido",
+        movedToProcessing: "movido(s) para \"Pedidos em processamento\".",
+        processingEmpty: "Nenhum pedido exportado por enquanto.",
+        statusBreakdown: "Distribuição por status",
       },
       mbOrders: {
         title: "Pedidos dos compradores de mídia",
@@ -999,6 +1008,9 @@ export const admin: Record<string, Record<string, any>> = {
         clearSelection: "Снять выделение",
         selectAllAria: "Выбрать всё",
         selectRowAria: "Выбрать эту заявку",
+        movedToProcessing: "перемещено в «Заказы в обработке».",
+        processingEmpty: "Пока нет экспортированных заказов.",
+        statusBreakdown: "Распределение по статусам",
       },
       mbOrders: {
         title: "Заказы медиабайеров",

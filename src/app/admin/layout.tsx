@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const nav: NavItem[] = [
     { href: "/admin/dashboard", label: t("nav.dashboard"), subtitle: t("navSub.dashboard"), icon: "grid" },
     { href: "/admin/orders", label: t("nav.orders"), subtitle: t("navSub.orders"), icon: "list" },
+    { href: "/admin/orders-processing", label: t("nav.ordersProcessing"), subtitle: t("navSub.ordersProcessing"), icon: "download" },
     { href: "/admin/mediabuyers-orders", label: t("nav.mbOrders"), subtitle: t("navSub.mbOrders"), icon: "truck" },
     { href: "/admin/bulk-update", label: t("nav.bulkUpdate"), subtitle: t("navSub.bulkUpdate"), icon: "edit" },
     { href: "/admin/products", label: t("nav.products"), subtitle: t("navSub.products"), icon: "box" },
