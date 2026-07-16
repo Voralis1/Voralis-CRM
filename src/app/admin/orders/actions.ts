@@ -33,7 +33,7 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   // Charger l'ordre + le produit pour calculer le payout éventuel
   const { data: order } = await db
     .from("orders")
-    .select("id, product_id, status, payout_amount")
+    .select("id, product_id, status, payout_amount, exported_at")
     .eq("id", orderId)
     .single();
   if (!order) return;
@@ -50,6 +50,12 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   };
   if (next === "confirmed") patch.confirmed_at = new Date().toISOString();
   if (next === "delivered") patch.delivered_at = new Date().toISOString();
+
+  // Dès que le statut quitte "nouveau", la commande bascule automatiquement
+  // dans /admin/orders-processing (même mécanisme que l'export manuel).
+  if (next !== "new" && !order.exported_at) {
+    patch.exported_at = new Date().toISOString();
+  }
 
   // Pose la commission quand le statut facturable du produit est atteint
   if (
@@ -73,6 +79,7 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
   }
 
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders-processing");
   revalidatePath("/panel/leads");
 }
 
@@ -140,7 +147,7 @@ export async function bulkChangeStatus(
   // Charge les commandes correspondantes (+ le produit pour le payout).
   const { data: orders, error: selectError } = await db
     .from("orders")
-    .select("id, public_id, product_id, status, payout_amount")
+    .select("id, public_id, product_id, status, payout_amount, exported_at")
     .in("public_id", ids);
 
   if (selectError)
@@ -167,6 +174,12 @@ export async function bulkChangeStatus(
     };
     if (next === "confirmed") patch.confirmed_at = new Date().toISOString();
     if (next === "delivered") patch.delivered_at = new Date().toISOString();
+
+    // Dès que le statut quitte "nouveau", la commande bascule automatiquement
+    // dans /admin/orders-processing (même mécanisme que l'export manuel).
+    if (next !== "new" && !order.exported_at) {
+      patch.exported_at = new Date().toISOString();
+    }
 
     if (
       product &&
@@ -204,6 +217,7 @@ export async function bulkChangeStatus(
   }
 
   revalidatePath("/admin/orders");
+  revalidatePath("/admin/orders-processing");
   revalidatePath("/panel/leads");
   return { updated, notFound, failed, error: firstError };
 }
