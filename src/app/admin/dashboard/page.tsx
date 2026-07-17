@@ -36,6 +36,26 @@ export default async function AdminDashboard() {
     .select("id", { count: "exact", head: true })
     .in("status", ["confirmed", "shipped", "in_delivery", "delivered"]);
 
+  // Payout dû : somme du payout (commission $) des leads confirmés non
+  // encore payés, tous affiliés confondus. Même logique que /admin/payout.
+  const PAYABLE = ["confirmed", "shipped", "in_delivery", "delivered"];
+  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  const { data: unpaidOrders } = await supabase
+    .from("orders")
+    .select("product, product_id, paid_at")
+    .in("status", PAYABLE)
+    .is("paid_at", null);
+  const { data: prods } = await supabase.from("project_products").select("id, name, payout");
+  const payoutById = new Map<string, number>();
+  const payoutByName = new Map<string, number>();
+  for (const p of prods ?? []) {
+    payoutById.set(p.id, Number(p.payout ?? 0));
+    payoutByName.set(norm(p.name), Number(p.payout ?? 0));
+  }
+  const leadPayout = (o: any): number =>
+    (o.product_id && payoutById.get(o.product_id)) ?? payoutByName.get(norm(o.product)) ?? 0;
+  const payoutTotal = (unpaidOrders ?? []).reduce((s, o) => s + leadPayout(o), 0);
+
 
   // Top 3 affiliates
   const { data: topAffiliates } = await supabase
@@ -114,7 +134,12 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <HeroBanner title={t("adm.dashboard.welcome")}>
-
+        {t("adm.dashboard.confRate")}{" "}
+        <span className="font-semibold text-[#22c55e]">{confirmationRate}%</span> ·{" "}
+        <span className="rounded px-1.5 py-0.5 font-semibold" style={{ background: "rgba(239,68,68,0.18)", color: "#fca5a5" }}>
+          {t("adm.dashboard.cancellations")} {cancellationRate}%
+        </span>{" "}
+        · {t("adm.dashboard.payoutDue")} <span className="font-semibold text-[#f5a623]">${payoutTotal.toFixed(2)}</span>
       </HeroBanner>
 
       <DateRangeCalendar />

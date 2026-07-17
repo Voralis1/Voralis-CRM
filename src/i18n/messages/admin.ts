@@ -5,6 +5,9 @@ export const admin: Record<string, Record<string, any>> = {
     adm: {
       dashboard: {
         welcome: "Bienvenue sur le CRM de Voralis",
+        confRate: "Taux de confirmation",
+        cancellations: "Annulations",
+        payoutDue: "Payout dû",
         totalLeads: "Total leads envoyés",
         totalLeadsDesc: "Volume total reçu",
         confirmedLeads: "Leads confirmés",
@@ -325,6 +328,9 @@ export const admin: Record<string, Record<string, any>> = {
     adm: {
       dashboard: {
         welcome: "Welcome to the Voralis CRM",
+        confRate: "Confirmation rate",
+        cancellations: "Cancellations",
+        payoutDue: "Payout due",
         totalLeads: "Total leads sent",
         totalLeadsDesc: "Total volume received",
         confirmedLeads: "Confirmed leads",
@@ -645,6 +651,9 @@ export const admin: Record<string, Record<string, any>> = {
     adm: {
       dashboard: {
         welcome: "Bem-vindo ao CRM da Voralis",
+        confRate: "Taxa de confirmação",
+        cancellations: "Cancelamentos",
+        payoutDue: "Payout devido",
         totalLeads: "Total de leads enviados",
         totalLeadsDesc: "Volume total recebido",
         confirmedLeads: "Leads confirmados",
@@ -965,6 +974,9 @@ export const admin: Record<string, Record<string, any>> = {
     adm: {
       dashboard: {
         welcome: "Добро пожаловать в CRM Voralis",
+        confRate: "Процент подтверждения",
+        cancellations: "Отмены",
+        payoutDue: "Выплата к получению",
         totalLeads: "Всего отправлено лидов",
         totalLeadsDesc: "Общий полученный объём",
         confirmedLeads: "Подтверждённые лиды",
