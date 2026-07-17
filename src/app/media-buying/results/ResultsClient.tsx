@@ -25,7 +25,7 @@ export default function ResultsClient({ spend, orders }: { spend: any[]; orders:
     const sFilt = spend.filter(
       (s) =>
         inRange(String(s.date), from, to) &&
-        (!buyer || norm(s.buyer_name).includes(norm(buyer))) &&
+        (!buyer || norm(s.account_name).includes(norm(buyer))) &&
         (!country || normCountry(s.country) === normCountry(country))
     );
     const oFilt = orders.filter(
@@ -36,9 +36,9 @@ export default function ResultsClient({ spend, orders }: { spend: any[]; orders:
 
     const groups = new Map<string, any>();
     for (const s of sFilt) {
-      const key = `${norm(s.buyer_name)}|${norm(s.campaign)}|${normCountry(s.country)}`;
-      const g = groups.get(key) ?? { buyer: s.buyer_name || "—", campaign: s.campaign || "—", country: s.country || "—", spent: 0 };
-      g.spent += Number(s.amount_usd) || 0;
+      const key = `${norm(s.account_name)}|${norm(s.campaign)}|${normCountry(s.country)}`;
+      const g = groups.get(key) ?? { buyer: s.account_name || "—", campaign: s.campaign || "—", country: s.country || "—", spent: 0 };
+      g.spent += Number(s.spend) || 0;
       groups.set(key, g);
     }
 
