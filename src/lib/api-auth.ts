@@ -29,11 +29,19 @@ export async function authenticateToken(
 }
 
 // Extrait et valide le Bearer token d'une requête entrante -> renvoie l'affilié actif.
+// Certains outils tiers (CRM/trackers d'affiliés) ne savent pas envoyer de
+// header custom : on accepte donc aussi le token en query string (?token=…)
+// en repli, comme le fait déjà l'endpoint LeadVertex.
 export async function authenticateAffiliate(
   req: Request
 ): Promise<{ affiliate: Affiliate } | { error: string; code: number }> {
   const header = req.headers.get("authorization") || "";
   const match = header.match(/^Bearer\s+(.+)$/i);
-  if (!match) return { error: "Token manquant ou mal formé", code: 401 };
-  return authenticateToken(match[1]);
+  if (match) return authenticateToken(match[1]);
+
+  const url = new URL(req.url);
+  const queryToken = url.searchParams.get("token");
+  if (queryToken) return authenticateToken(queryToken);
+
+  return { error: "Token manquant ou mal formé", code: 401 };
 }

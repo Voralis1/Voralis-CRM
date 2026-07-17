@@ -29,6 +29,10 @@ Authorization: Bearer VOTRE_TOKEN
 Content-Type: application/json
 ```
 
+> **Votre outil ne permet pas d'envoyer un header personnalisé ?** Vous pouvez alors
+> passer le token en query string à la place :
+> `POST https://www.voralisnatural.com/api/v1/leads?token=VOTRE_TOKEN`
+
 ### Champs du corps JSON
 
 | Champ          | Obligatoire | Règle / format |
