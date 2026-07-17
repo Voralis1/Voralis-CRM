@@ -6,10 +6,10 @@ import { nextOrderPublicId } from "@/lib/orderId";
 import { getMyNetworkId } from "@/lib/auth";
 
 // Résout un produit du catalogue par son ID (cible de orders.product_id).
-async function resolveProduct(db: any, productId: string): Promise<{ id: string; name: string }> {
+async function resolveProduct(db: any, productId: string): Promise<{ id: string; name: string; payout: number | null }> {
   const { data: product, error } = await db
     .from("project_products")
-    .select("id, name")
+    .select("id, name, payout")
     .eq("id", productId)
     .single();
   if (error || !product) throw new Error("Produit introuvable.");
@@ -82,7 +82,6 @@ export async function createOrder(data: {
   country: string;
   address?: string;
   status: string;
-  payout_amount?: number;
   comment?: string;
 }) {
   // Service-role : la table orders n'a pas de politique d'insertion pour les affiliés.
@@ -99,7 +98,9 @@ export async function createOrder(data: {
     .maybeSingle();
   if (!network) throw new Error("Aucun affiliate network associé à votre compte.");
 
-  // 1) Résoudre le produit choisi.
+  // 1) Résoudre le produit choisi. Le payout n'est JAMAIS pris depuis le
+  //    client : il vient uniquement du catalogue, pour qu'un affilié ne
+  //    puisse pas se fixer lui-même une commission arbitraire.
   const product = await resolveProduct(db, data.product_id);
 
   // 2) Insérer la commande avec un identifiant public numérique.
@@ -117,7 +118,7 @@ export async function createOrder(data: {
       country: data.country,
       address: data.address,
       status: data.status,
-      payout_amount: data.payout_amount,
+      payout_amount: product.payout,
       comment: data.comment,
       affiliate: data.affiliate?.trim() || null,
     },

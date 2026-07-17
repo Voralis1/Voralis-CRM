@@ -157,9 +157,6 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
         country: createData.country,
         address: createData.address || undefined,
         status: createData.status,
-        payout_amount: createData.payout_amount
-          ? parseFloat(createData.payout_amount as any)
-          : undefined,
         comment: createData.comment || undefined,
       });
       setIsCreating(false);
@@ -343,14 +340,12 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
                     type="number"
                     step="0.01"
                     value={createData.payout_amount}
-                    onChange={(e) =>
-                      setCreateData({
-                        ...createData,
-                        payout_amount: e.target.value,
-                      })
-                    }
-                    className="input w-full"
+                    readOnly
+                    disabled
+                    placeholder={t("aff.leads.selectPlaceholder")}
+                    className="input w-full cursor-not-allowed bg-elevated text-ink-muted"
                   />
+                  <p className="mt-1 text-xs text-ink-muted">{t("aff.leads.payoutLockedHelp")}</p>
                 </div>
               </div>
 
