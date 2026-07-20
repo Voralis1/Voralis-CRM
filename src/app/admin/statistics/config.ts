@@ -12,17 +12,18 @@ export const SUBCOLS = [
 export type SubColKey = (typeof SUBCOLS)[number]["key"];
 export type CellKind = (typeof SUBCOLS)[number]["kind"];
 
-// Les 6 groupes de statut, avec leur couleur d'en-tête et le mapping vers les
+// Groupes de statut, avec leur couleur d'en-tête et le mapping vers les
 // statuts de commande réels (slugs de la table order_statuses, cf.
 // src/lib/orderStatus.ts). Un statut personnalisé n'entre dans aucun de ces
 // groupes tant qu'il n'est pas explicitement ajouté ici.
+//
+// Statuts consolidés (2026-07) : "confirmed" couvre désormais aussi
+// expédié/en livraison/livré, "cancelled" couvre aussi annulé côté client
+// et retourné -> les anciens groupes "sent"/"paid"/"returned"/"in_transit"
+// n'ont plus de statut à leur correspondre et ont été retirés.
 export const STATUS_GROUPS = [
   { key: "approved", label: "Confirmé", color: "#DFF3DF", statuses: ["confirmed"] },
-  { key: "canceled", label: "Annulé", color: "#F8D7DA", statuses: ["cancelled", "rejected"] },
-  { key: "sent", label: "Expédié", color: "#E8E2FF", statuses: ["shipped"] },
-  { key: "paid", label: "Livré", color: "#DFF3DF", statuses: ["delivered"] },
-  { key: "returned", label: "Retourné", color: "#F5B7B1", statuses: ["returned"] },
-  { key: "in_transit", label: "En livraison", color: "#F9E79F", statuses: ["in_delivery"] },
+  { key: "canceled", label: "Annulé", color: "#F8D7DA", statuses: ["cancelled"] },
 ] as const satisfies ReadonlyArray<{
   key: string;
   label: string;

@@ -6,7 +6,7 @@ import { ExportButton } from "./ExportButton";
 import { OrdersFilter, OrderFilters } from "./OrdersFilter";
 import { OrdersTable } from "./OrdersTable";
 import { bulkChangeStatus, markOrdersExported, deleteOrder } from "./actions";
-import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
+import { statusMeta, type OrderStatusRow, type StatusTitleRow } from "@/lib/orderStatus";
 import PieChart from "@/components/PieChart";
 
 interface OrdersBoardClientProps {
@@ -29,7 +29,9 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [statuses, setStatuses] = useState<OrderStatusRow[]>([]);
-  const [bulkStatus, setBulkStatus] = useState("");
+  const [titles, setTitles] = useState<StatusTitleRow[]>([]);
+  // Valeur du <select> = id du titre précis choisi (pas juste le slug).
+  const [bulkTitleId, setBulkTitleId] = useState("");
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const [isApplying, startApplying] = useTransition();
   const [, startMoving] = useTransition();
@@ -38,13 +40,28 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
   useEffect(() => {
     fetch("/api/admin/statuses", { cache: "no-store" })
       .then((res) => res.json())
+      .then((data) => setStatuses(data.statuses || []))
+      .catch(() => {});
+    fetch("/api/admin/statuses/titles", { cache: "no-store" })
+      .then((res) => res.json())
       .then((data) => {
-        const options: OrderStatusRow[] = data.statuses || [];
-        setStatuses(options);
-        setBulkStatus((current) => current || options[0]?.slug || "");
+        const options: StatusTitleRow[] = data.titles || [];
+        setTitles(options);
+        setBulkTitleId((current) => current || String(options[0]?.id ?? ""));
       })
       .catch(() => {});
   }, []);
+
+  const titlesBySlug = (() => {
+    const map = new Map<string, StatusTitleRow[]>();
+    for (const to of titles) {
+      const list = map.get(to.slug) ?? [];
+      list.push(to);
+      map.set(to.slug, list);
+    }
+    return map;
+  })();
+  const selectedBulkTitle = titles.find((o) => String(o.id) === bulkTitleId);
 
   const totalRows = rows.length;
   const filteredRows = rows.filter((o) => {
@@ -92,12 +109,12 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
   );
 
   const applyBulkStatus = () => {
-    if (selectedRows.length === 0 || !bulkStatus) return;
+    if (selectedRows.length === 0 || !selectedBulkTitle) return;
     setBulkMessage(null);
     const publicIds = selectedRows.map((o) => o.public_id);
-    const label = statuses.find((s) => s.slug === bulkStatus)?.title ?? bulkStatus;
+    const label = selectedBulkTitle.title;
     startApplying(async () => {
-      const res = await bulkChangeStatus(publicIds, bulkStatus);
+      const res = await bulkChangeStatus(publicIds, selectedBulkTitle.slug, selectedBulkTitle.id);
       if (res.updated.length > 0) {
         setSelectedIds(new Set());
         setBulkMessage(
@@ -176,19 +193,23 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
           <span className="text-sm font-medium text-ink">{t("adm.bulk.newStatus")}</span>
           <select
             className="input w-auto"
-            value={bulkStatus}
-            onChange={(e) => setBulkStatus(e.target.value)}
+            value={bulkTitleId}
+            onChange={(e) => setBulkTitleId(e.target.value)}
           >
             {statuses.map((s) => (
-              <option key={s.slug} value={s.slug}>
-                {s.title}
-              </option>
+              <optgroup key={s.slug} label={s.title}>
+                {(titlesBySlug.get(s.slug) ?? []).map((to) => (
+                  <option key={to.id} value={to.id}>
+                    {to.title}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <button
             type="button"
             className="btn btn-primary disabled:opacity-50"
-            disabled={isApplying || !bulkStatus}
+            disabled={isApplying || !selectedBulkTitle}
             onClick={applyBulkStatus}
           >
             {isApplying ? t("adm.bulk.updating") : t("adm.bulk.update")}
@@ -202,6 +223,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
       <OrdersTable
         rows={filteredRows}
         statuses={statuses}
+        titles={titles}
         selectedIds={selectedIds}
         onToggleRow={toggleRow}
         onToggleAll={toggleAll}

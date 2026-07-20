@@ -15,7 +15,7 @@ export default async function StatisticsPage() {
       supabase
         .from("orders")
         .select("id", { count: "exact", head: true })
-        .in("status", ["cancelled", "rejected"]),
+        .eq("status", "cancelled"),
     ]);
 
   const total = totalCount ?? 0;

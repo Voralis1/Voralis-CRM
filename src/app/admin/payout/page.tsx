@@ -6,7 +6,7 @@ import { getServerT } from "@/i18n/server";
 export const dynamic = "force-dynamic";
 
 // Statuts confirmés (payables). Cohérent avec le dashboard.
-const CONFIRMED = ["confirmed", "shipped", "in_delivery", "delivered"];
+const CONFIRMED = ["confirmed"];
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
 
 export default async function AdminPayoutPage() {

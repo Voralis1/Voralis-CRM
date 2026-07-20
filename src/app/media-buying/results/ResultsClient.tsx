@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
 import { canonicalCountry } from "@/lib/currency";
 
-const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered"]);
+const CONFIRMED = new Set(["confirmed"]);
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
 const normCountry = (v: unknown) => canonicalCountry(String(v ?? "")).toLowerCase();
 const inRange = (d: string, from: string, to: string) => (!from || d >= from) && (!to || d <= to);

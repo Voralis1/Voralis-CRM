@@ -1,7 +1,7 @@
 // Calcul partagé du taux de confirmation d'un produit à partir des leads.
-// confirmés = statut confirmé ou au-delà ; valides = hors duplicate/spam.
-const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered", "returned", "cancelled"]);
-const EXCLUDED = new Set(["duplicate", "spam"]);
+// confirmés = statut confirmé ou au-delà ; valides = hors spam.
+const CONFIRMED = new Set(["confirmed", "cancelled"]);
+const EXCLUDED = new Set(["spam"]);
 const norm = (v: any) => String(v ?? "").trim().toLowerCase();
 
 export type RateOrder = { status: string; product_id: string | null; product: string | null };
@@ -25,7 +25,7 @@ export function confirmationRateFor(
 // confirmées / (confirmées + annulées). Mêmes groupes de statut que les
 // statistiques admin (cf. STATUS_GROUPS "approved"/"canceled").
 const CONFIRMED_ONLY = new Set(["confirmed"]);
-const CANCELLED_ONLY = new Set(["cancelled", "rejected"]);
+const CANCELLED_ONLY = new Set(["cancelled"]);
 
 export function affiliateConfirmationRateFor(
   product: { id: string; name: string },

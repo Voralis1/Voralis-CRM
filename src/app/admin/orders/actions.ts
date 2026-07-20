@@ -49,7 +49,6 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
     assigned_agent: userId,
   };
   if (next === "confirmed") patch.confirmed_at = new Date().toISOString();
-  if (next === "delivered") patch.delivered_at = new Date().toISOString();
 
   // Dès que le statut quitte "nouveau", la commande bascule automatiquement
   // dans /admin/orders-processing (même mécanisme que l'export manuel).
@@ -57,13 +56,9 @@ export async function changeStatus(orderId: string, next: OrderStatus) {
     patch.exported_at = new Date().toISOString();
   }
 
-  // Pose la commission quand le statut facturable du produit est atteint
-  if (
-    product &&
-    ((product.payout_model === "confirmed" && next === "confirmed") ||
-      (product.payout_model === "delivered" && next === "delivered")) &&
-    order.payout_amount == null
-  ) {
+  // Le payout se déclenche dès que la commande atteint "confirmed", quel
+  // que soit le payout_model du produit (statuts consolidés).
+  if (product && next === "confirmed" && order.payout_amount == null) {
     patch.payout_amount = product.payout;
     patch.payout_currency = product.currency;
   }
@@ -124,7 +119,8 @@ export interface BulkUpdateResult {
 // Met à jour le statut de plusieurs commandes à partir de leur public_id.
 export async function bulkChangeStatus(
   publicIds: string[],
-  next: OrderStatus
+  next: OrderStatus,
+  titleId?: number | null
 ): Promise<BulkUpdateResult> {
   const userId = await requireStaff();
   if (!userId)
@@ -149,7 +145,7 @@ export async function bulkChangeStatus(
   // Charge les commandes correspondantes (+ le produit pour le payout).
   const { data: orders, error: selectError } = await db
     .from("orders")
-    .select("id, public_id, product_id, status, payout_amount, exported_at")
+    .select("id, public_id, product_id, status, status_title_id, payout_amount, exported_at")
     .in("public_id", ids);
 
   if (selectError)
@@ -165,9 +161,11 @@ export async function bulkChangeStatus(
   let firstError: string | undefined;
 
   for (const order of found) {
-    // La commande est déjà dans le statut cible : rien à faire, on le
-    // signale distinctement plutôt que de compter un "update" fictif.
-    if (order.status === next) {
+    // La commande est déjà dans le statut ET le titre précis ciblés : rien
+    // à faire, on le signale distinctement plutôt que de compter un
+    // "update" fictif. (Deux titres différents sous le même slug, ex.
+    // "Expédié" -> "Livré", restent un vrai changement.)
+    if (order.status === next && order.status_title_id === (titleId ?? null)) {
       alreadyInStatus.push(order.public_id);
       continue;
     }
@@ -180,10 +178,10 @@ export async function bulkChangeStatus(
 
     const patch: Record<string, any> = {
       status: next,
+      status_title_id: titleId ?? null,
       assigned_agent: userId,
     };
     if (next === "confirmed") patch.confirmed_at = new Date().toISOString();
-    if (next === "delivered") patch.delivered_at = new Date().toISOString();
 
     // Dès que le statut quitte "nouveau", la commande bascule automatiquement
     // dans /admin/orders-processing (même mécanisme que l'export manuel).
@@ -191,12 +189,10 @@ export async function bulkChangeStatus(
       patch.exported_at = new Date().toISOString();
     }
 
-    if (
-      product &&
-      ((product.payout_model === "confirmed" && next === "confirmed") ||
-        (product.payout_model === "delivered" && next === "delivered")) &&
-      order.payout_amount == null
-    ) {
+    // Le payout se déclenche dès que la commande atteint "confirmed",
+    // quel que soit le payout_model du produit (statuts consolidés : il
+    // n'y a plus de statut "delivered" distinct pour temporiser le payout).
+    if (product && next === "confirmed" && order.payout_amount == null) {
       patch.payout_amount = product.payout;
       patch.payout_currency = product.currency;
     }

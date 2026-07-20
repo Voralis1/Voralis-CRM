@@ -24,21 +24,25 @@ export default async function AdminDashboard() {
   const { count: cancelledCount } = await supabase
     .from("orders")
     .select("id", { count: "exact", head: true })
-    .in("status", ["cancelled", "rejected"]);
+    .eq("status", "cancelled");
 
-  // Pour le taux de livraison : livrés / leads confirmés (confirmé + pipeline logistique).
-  const { count: deliveredCount } = await supabase
-    .from("orders")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "delivered");
+  // Taux de livraison : "delivered" n'est plus un statut distinct (fondu
+  // dans "confirmed" lors de la consolidation des statuts). status_history
+  // garde l'ancienne valeur "delivered" sans contrainte de clé étrangère,
+  // donc on continue de compter les livraisons historiques depuis là.
   const { count: pipelineCount } = await supabase
     .from("orders")
     .select("id", { count: "exact", head: true })
-    .in("status", ["confirmed", "shipped", "in_delivery", "delivered"]);
+    .eq("status", "confirmed");
+  const { data: deliveredHistory } = await supabase
+    .from("status_history")
+    .select("order_id")
+    .eq("to_status", "delivered");
+  const deliveredCount = new Set((deliveredHistory ?? []).map((h) => h.order_id)).size;
 
   // Payout dû : somme du payout (commission $) des leads confirmés non
   // encore payés, tous affiliés confondus. Même logique que /admin/payout.
-  const PAYABLE = ["confirmed", "shipped", "in_delivery", "delivered"];
+  const PAYABLE = ["confirmed"];
   const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
   const { data: unpaidOrders } = await supabase
     .from("orders")
@@ -127,7 +131,7 @@ export default async function AdminDashboard() {
   const cancelled = cancelledCount ?? 0;
   const confirmationRate = total > 0 ? Math.round((confirmed / total) * 10000) / 100 : 0;
   const cancellationRate = total > 0 ? Math.round((cancelled / total) * 10000) / 100 : 0;
-  const delivered = deliveredCount ?? 0;
+  const delivered = deliveredCount;
   const pipeline = pipelineCount ?? 0;
   const deliveryRate = pipeline > 0 ? Math.round((delivered / pipeline) * 10000) / 100 : 0;
 

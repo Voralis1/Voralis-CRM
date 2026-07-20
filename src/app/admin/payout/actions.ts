@@ -5,7 +5,7 @@ import { getProfile } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 // Statuts considérés comme « confirmés » (donc payables au webmaster).
-const CONFIRMED = ["confirmed", "shipped", "in_delivery", "delivered"];
+const CONFIRMED = ["confirmed"];
 
 // Marque comme payés tous les leads confirmés non encore payés d'un webmaster.
 // -> le payout dû repasse à 0. Réservé aux admins.

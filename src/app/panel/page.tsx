@@ -23,7 +23,7 @@ export default async function PanelDashboard() {
   const rows = (orders ?? []) as any[];
   const count = (s: OrderStatus) => rows.filter((r) => r.status === s).length;
   const total = rows.length;
-  const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered"]);
+  const CONFIRMED = new Set(["confirmed"]);
   const confirmed = rows.filter((r) => CONFIRMED.has(r.status)).length;
 
   // Payout total = somme du payout (commission $) des leads confirmés.
@@ -42,7 +42,7 @@ export default async function PanelDashboard() {
     .filter((r) => CONFIRMED.has(r.status) && !r.paid_at)
     .reduce((s, r) => s + leadPayout(r), 0);
 
-  const cancelled = count("cancelled") + count("rejected");
+  const cancelled = count("cancelled");
   const confRate = total ? Math.round((confirmed / total) * 100) : 0;
   const cancRate = total ? Math.round((cancelled / total) * 100) : 0;
 

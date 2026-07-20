@@ -74,5 +74,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
+  // Chaque slug doit avoir au moins un titre sélectionnable : on crée un
+  // titre par défaut (= le titre du slug) que l'admin pourra ensuite
+  // dédoubler en plusieurs titres depuis l'écran « Gestion des statuts ».
+  await db.from("status_titles").insert({ slug, title, sort_order: 0 });
+
   return NextResponse.json({ success: true });
 }

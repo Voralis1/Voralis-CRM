@@ -13,6 +13,13 @@ interface StatusItem {
   sortLabel: string;
 }
 
+interface TitleItem {
+  id: number;
+  slug: string;
+  title: string;
+  sortOrder: number;
+}
+
 // Les valeurs (envoyées à l'API) restent en français ; seul le libellé affiché est traduit.
 const GROUP_OPTIONS = ["annulé", "confirmé", "en traitement", "double", "spam/erreur"];
 const GROUP_LABEL_KEYS: Record<string, string> = {
@@ -60,11 +67,18 @@ export default function StatusesAdminPage() {
   const groupLabel = (g: string) => (GROUP_LABEL_KEYS[g] ? t(GROUP_LABEL_KEYS[g]) : g);
   const sortLabel = (s: string) => (SORT_LABEL_KEYS[s] ? t(SORT_LABEL_KEYS[s]) : s);
   const [statuses, setStatuses] = useState<StatusItem[]>([]);
+  const [titles, setTitles] = useState<TitleItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<Omit<StatusItem, "id">>(initialForm);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Formulaire "nouveau titre" par slug (une saisie en cours par slug).
+  const [newTitleDrafts, setNewTitleDrafts] = useState<Record<string, string>>({});
+  const [editingTitleId, setEditingTitleId] = useState<number | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState("");
+  const [titleError, setTitleError] = useState<string | null>(null);
 
   const fetchStatuses = async () => {
     try {
@@ -77,9 +91,31 @@ export default function StatusesAdminPage() {
     }
   };
 
+  const fetchTitles = async () => {
+    try {
+      const res = await fetch("/api/admin/statuses/titles", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t("adm.statuses.errLoad"));
+      setTitles(data.titles || []);
+    } catch (err) {
+      setTitleError((err as Error).message);
+    }
+  };
+
   useEffect(() => {
     fetchStatuses();
+    fetchTitles();
   }, []);
+
+  const titlesBySlug = useMemo(() => {
+    const map = new Map<string, TitleItem[]>();
+    for (const ti of titles) {
+      const list = map.get(ti.slug) ?? [];
+      list.push(ti);
+      map.set(ti.slug, list);
+    }
+    return map;
+  }, [titles]);
 
   const canSubmit = useMemo(
     () =>
@@ -114,7 +150,7 @@ export default function StatusesAdminPage() {
       const res = await fetch(`/api/admin/statuses/${encodeURIComponent(slug)}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t("adm.statuses.errDelete"));
-      await fetchStatuses();
+      await Promise.all([fetchStatuses(), fetchTitles()]);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -146,11 +182,68 @@ export default function StatusesAdminPage() {
       setIsModalOpen(false);
       setForm(initialForm);
       setEditingSlug(null);
-      await fetchStatuses();
+      await Promise.all([fetchStatuses(), fetchTitles()]);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAddTitle = async (slug: string) => {
+    const value = (newTitleDrafts[slug] || "").trim();
+    if (!value) return;
+    setTitleError(null);
+    try {
+      const res = await fetch("/api/admin/statuses/titles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, title: value, sortOrder: (titlesBySlug.get(slug)?.length ?? 0) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t("adm.statuses.errSaveTitle"));
+      setNewTitleDrafts((d) => ({ ...d, [slug]: "" }));
+      await fetchTitles();
+    } catch (err) {
+      setTitleError((err as Error).message);
+    }
+  };
+
+  const startEditTitle = (ti: TitleItem) => {
+    setEditingTitleId(ti.id);
+    setEditingTitleValue(ti.title);
+    setTitleError(null);
+  };
+
+  const saveEditTitle = async () => {
+    if (editingTitleId == null) return;
+    const value = editingTitleValue.trim();
+    if (!value) return;
+    try {
+      const res = await fetch(`/api/admin/statuses/titles/${editingTitleId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t("adm.statuses.errSaveTitle"));
+      setEditingTitleId(null);
+      setEditingTitleValue("");
+      await fetchTitles();
+    } catch (err) {
+      setTitleError((err as Error).message);
+    }
+  };
+
+  const handleDeleteTitle = async (id: number) => {
+    if (!confirm(t("adm.statuses.confirmDeleteTitle"))) return;
+    try {
+      const res = await fetch(`/api/admin/statuses/titles/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("adm.statuses.errDeleteTitle"));
+      await fetchTitles();
+    } catch (err) {
+      setTitleError((err as Error).message);
     }
   };
 
@@ -283,6 +376,7 @@ export default function StatusesAdminPage() {
       {error && !isModalOpen && (
         <div className="alert alert-danger">{error}</div>
       )}
+      {titleError && <div className="alert alert-danger">{titleError}</div>}
 
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[900px]">
@@ -306,14 +400,68 @@ export default function StatusesAdminPage() {
               </tr>
             ) : (
               statuses.map((status) => (
-                <tr key={status.slug} className="row-hover">
+                <tr key={status.slug} className="row-hover align-top">
                   <td className="td font-mono text-xs">{status.id}</td>
                   <td className="td">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>
                       {status.slug}
                     </span>
                   </td>
-                  <td className="td">{status.title}</td>
+                  <td className="td">
+                    <div>{status.title}</div>
+                    <div className="mt-2 space-y-1.5">
+                      <div className="text-xs font-medium text-ink-muted">{t("adm.statuses.titlesLabel")}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(titlesBySlug.get(status.slug) ?? []).map((ti) =>
+                          editingTitleId === ti.id ? (
+                            <span key={ti.id} className="inline-flex items-center gap-1">
+                              <input
+                                autoFocus
+                                value={editingTitleValue}
+                                onChange={(e) => setEditingTitleValue(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && saveEditTitle()}
+                                className="input h-7 w-32 text-xs"
+                              />
+                              <button onClick={saveEditTitle} className="text-xs text-accent hover:underline">
+                                ✓
+                              </button>
+                              <button onClick={() => setEditingTitleId(null)} className="text-xs text-ink-muted hover:underline">
+                                ✕
+                              </button>
+                            </span>
+                          ) : (
+                            <span
+                              key={ti.id}
+                              className="inline-flex items-center gap-1 rounded-full bg-elevated px-2 py-0.5 text-xs"
+                            >
+                              {ti.title}
+                              <button onClick={() => startEditTitle(ti)} className="text-ink-muted hover:text-accent" title={t("adm.statuses.modify")}>
+                                ✎
+                              </button>
+                              <button onClick={() => handleDeleteTitle(ti.id)} className="text-ink-muted hover:text-danger" title={t("adm.statuses.delete")}>
+                                ×
+                              </button>
+                            </span>
+                          )
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          value={newTitleDrafts[status.slug] || ""}
+                          onChange={(e) => setNewTitleDrafts((d) => ({ ...d, [status.slug]: e.target.value }))}
+                          onKeyDown={(e) => e.key === "Enter" && handleAddTitle(status.slug)}
+                          placeholder={t("adm.statuses.newTitlePlaceholder")}
+                          className="input h-7 w-36 text-xs"
+                        />
+                        <button
+                          onClick={() => handleAddTitle(status.slug)}
+                          className="text-xs text-accent hover:underline whitespace-nowrap"
+                        >
+                          {t("adm.statuses.addTitle")}
+                        </button>
+                      </div>
+                    </div>
+                  </td>
                   <td className="td">{groupLabel(status.group)}</td>
                   <td className="td">{status.hideDateFromAffiliates ? t("adm.statuses.yes") : t("adm.statuses.no")}</td>
                   <td className="td">{sortLabel(status.sortLabel)}</td>

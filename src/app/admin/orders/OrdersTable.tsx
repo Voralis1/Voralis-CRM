@@ -2,11 +2,12 @@
 
 import { formatProductPrice } from "@/lib/currency";
 import { useT } from "@/i18n/I18nProvider";
-import { statusMeta, type OrderStatusRow } from "@/lib/orderStatus";
+import { statusMeta, titleMeta, type OrderStatusRow, type StatusTitleRow } from "@/lib/orderStatus";
 
 interface OrdersTableProps {
   rows: any[];
   statuses: OrderStatusRow[];
+  titles: StatusTitleRow[];
   selectedIds: Set<string>;
   onToggleRow: (id: string) => void;
   onToggleAll: () => void;
@@ -17,6 +18,7 @@ interface OrdersTableProps {
 export function OrdersTable({
   rows,
   statuses,
+  titles,
   selectedIds,
   onToggleRow,
   onToggleAll,
@@ -58,6 +60,7 @@ export function OrdersTable({
         <tbody>
           {rows.map((o) => {
             const meta = statusMeta(statuses, o.status);
+            const preciseTitle = titleMeta(titles, o.status_title_id)?.title;
             const affiliates = o.affiliate_network as any;
             const product = o.project_products as any;
             const fullName = `${o.first_name}${o.last_name ? ` ${o.last_name}` : ""}`;
@@ -80,7 +83,7 @@ export function OrdersTable({
                 <td className="td text-xs text-ink-muted">{new Date(o.created_at).toLocaleString("fr-FR")}</td>
                 <td className="td">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta?.color}`}>
-                    {meta?.title ?? o.status}
+                    {preciseTitle ?? meta?.title ?? o.status}
                   </span>
                 </td>
                 <td className="td">{product?.price != null ? formatProductPrice(product.price, o.country) : "—"}</td>

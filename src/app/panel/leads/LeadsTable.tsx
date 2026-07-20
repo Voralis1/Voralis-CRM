@@ -111,7 +111,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
       country: order.country ?? "",
       comment: order.comment ?? "",
       payout_amount: order.payout_amount ?? "",
-      status: order.status ?? "new",
+      status: order.status ?? "processing",
       affiliate: order.affiliate ?? "",
       product_id: order.product_id ?? "",
     });
@@ -425,7 +425,7 @@ export function LeadsTable({ rows, statuses }: LeadsTableProps) {
                 <div>
                   <label className="label">{t("aff.leads.labelStatus")}</label>
                   <select
-                    value={editData.status || "new"}
+                    value={editData.status || "processing"}
                     onChange={(e) =>
                       setEditData({ ...editData, status: e.target.value })
                     }

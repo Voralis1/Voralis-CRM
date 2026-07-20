@@ -11,27 +11,41 @@ interface StatusOption {
   title: string;
 }
 
+interface TitleOption {
+  id: number;
+  slug: string;
+  title: string;
+}
+
 export default function BulkUpdatePage() {
   const t = useT();
   const [rawIds, setRawIds] = useState("");
   const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
-  const [status, setStatus] = useState("");
+  const [titleOptions, setTitleOptions] = useState<TitleOption[]>([]);
+  // Valeur du <select> = id du titre précis choisi (pas juste le slug).
+  const [titleId, setTitleId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [result, setResult] = useState<BulkUpdateResult | null>(null);
 
-  // Ne propose que les statuts définis dans l'onglet « Gestion des statuts ».
+  // Ne propose que les statuts/titres définis dans l'onglet « Gestion des statuts ».
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/admin/statuses", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      const options: StatusOption[] = data.statuses || [];
-      setStatusOptions(options);
-      setStatus((current) => current || options[0]?.slug || "");
+      const [statusesRes, titlesRes] = await Promise.all([
+        fetch("/api/admin/statuses", { cache: "no-store" }),
+        fetch("/api/admin/statuses/titles", { cache: "no-store" }),
+      ]);
+      if (statusesRes.ok) setStatusOptions((await statusesRes.json()).statuses || []);
+      if (titlesRes.ok) {
+        const options: TitleOption[] = (await titlesRes.json()).titles || [];
+        setTitleOptions(options);
+        setTitleId((current) => current || String(options[0]?.id ?? ""));
+      }
     })();
   }, []);
 
-  const statusLabel = (slug: string) => statusOptions.find((s) => s.slug === slug)?.title ?? slug;
+  const selectedTitle = titleOptions.find((o) => String(o.id) === titleId);
+  // Libellé affiché dans les messages de résultat : le titre précis choisi.
+  const chosenLabel = selectedTitle?.title ?? "";
 
   // Accepte les IDs séparés par retour à la ligne, virgule, point-virgule ou espace.
   const ids = useMemo(
@@ -40,17 +54,28 @@ export default function BulkUpdatePage() {
   );
 
   const handleSubmit = async () => {
-    if (ids.length === 0 || !status) return;
+    if (ids.length === 0 || !selectedTitle) return;
     setIsSaving(true);
     setResult(null);
     try {
-      const res = await bulkChangeStatus(ids, status as OrderStatus);
+      const res = await bulkChangeStatus(ids, selectedTitle.slug as OrderStatus, selectedTitle.id);
       setResult(res);
       if (res.updated.length > 0 && res.notFound.length === 0) setRawIds("");
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Groupe les titres par slug, dans l'ordre des statuts (pour l'affichage en <optgroup>).
+  const titlesBySlug = useMemo(() => {
+    const map = new Map<string, TitleOption[]>();
+    for (const to of titleOptions) {
+      const list = map.get(to.slug) ?? [];
+      list.push(to);
+      map.set(to.slug, list);
+    }
+    return map;
+  }, [titleOptions]);
 
   return (
     <div className="space-y-6">
@@ -79,14 +104,18 @@ export default function BulkUpdatePage() {
         <label className="block space-y-2 text-sm">
           <span className="font-medium">{t("adm.bulk.newStatus")}</span>
           <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            value={titleId}
+            onChange={(e) => setTitleId(e.target.value)}
             className="input w-full max-w-xs"
           >
             {statusOptions.map((s) => (
-              <option key={s.slug} value={s.slug}>
-                {s.title}
-              </option>
+              <optgroup key={s.slug} label={s.title}>
+                {(titlesBySlug.get(s.slug) ?? []).map((to) => (
+                  <option key={to.id} value={to.id}>
+                    {to.title}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
@@ -107,7 +136,7 @@ export default function BulkUpdatePage() {
         <div className="card space-y-3 p-6">
           <div className="alert alert-success">
             {result.updated.length} {result.updated.length > 1 ? t("adm.bulk.orderPlural") : t("adm.bulk.orderSingular")}{" "}
-            {result.updated.length > 1 ? t("adm.bulk.updatedToward") : t("adm.bulk.updatedTowardSingular")} «&nbsp;{statusLabel(status)}&nbsp;».
+            {result.updated.length > 1 ? t("adm.bulk.updatedToward") : t("adm.bulk.updatedTowardSingular")} «&nbsp;{chosenLabel}&nbsp;».
           </div>
           {result.updated.length > 0 && (
             <div className="text-xs font-mono text-ink-muted">{result.updated.join(", ")}</div>
@@ -130,12 +159,12 @@ export default function BulkUpdatePage() {
               <div>
                 {result.alreadyInStatus.length}{" "}
                 {result.alreadyInStatus.length > 1 ? t("adm.bulk.orderPlural") : t("adm.bulk.orderSingular")}{" "}
-                {result.alreadyInStatus.length > 1 ? t("adm.bulk.alreadyAtStatusPlural") : t("adm.bulk.alreadyAtStatus")} «&nbsp;{statusLabel(status)}&nbsp;» :
+                {result.alreadyInStatus.length > 1 ? t("adm.bulk.alreadyAtStatusPlural") : t("adm.bulk.alreadyAtStatus")} «&nbsp;{chosenLabel}&nbsp;» :
               </div>
               {result.alreadyInStatus.map((id) => (
                 <div key={id} className="text-xs">
                   {t("adm.orders.phOrderId")} <span className="font-mono">{id}</span>{" "}
-                  {t("adm.bulk.alreadyAtStatus")} «&nbsp;{statusLabel(status)}&nbsp;».
+                  {t("adm.bulk.alreadyAtStatus")} «&nbsp;{chosenLabel}&nbsp;».
                 </div>
               ))}
             </div>

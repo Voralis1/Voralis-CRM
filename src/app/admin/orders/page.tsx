@@ -10,7 +10,7 @@ export default async function OrdersPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select(
-      `id, public_id, product_id, product, country, affiliate_id, affiliate_network(name), created_at, status, payout_amount, first_name, last_name, phone, address, comment, affiliate, project_products(price)`
+      `id, public_id, product_id, product, country, affiliate_id, affiliate_network(name), created_at, status, status_title_id, payout_amount, first_name, last_name, phone, address, comment, affiliate, project_products(price)`
     )
     .is("exported_at", null)
     .order("created_at", { ascending: false })

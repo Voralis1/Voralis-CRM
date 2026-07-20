@@ -13,11 +13,12 @@ function checkAuth(req: Request): boolean {
   return !!process.env.REPORTING_API_KEY && bearer === process.env.REPORTING_API_KEY;
 }
 
-const DELIVERED = new Set(["delivered"]);
-// Même définition que le rapport Résultats media-buying : confirmée dès que la
-// commande a atteint "confirmed" ou une étape ultérieure de la livraison.
-// (test_confirmed est une branche à part, elle ne compte pas comme confirmée.)
-const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered"]);
+// Statuts consolidés (voir order_statuses) : "confirmed" est désormais le
+// seul statut couvrant confirmé/expédié/livré. "delivered_orders" ne peut
+// donc plus se lire depuis orders.status (toujours "confirmed" à ce stade) —
+// on le calcule depuis status_history, qui garde les anciennes valeurs
+// ("delivered") sans contrainte de clé étrangère, donc toujours interrogeable.
+const CONFIRMED = new Set(["confirmed"]);
 
 export async function GET(req: Request) {
   if (!checkAuth(req)) {
@@ -40,11 +41,25 @@ export async function GET(req: Request) {
   if (netErr) return NextResponse.json({ success: false, error_code: "DB", message: netErr.message }, { status: 500 });
   if (affErr) return NextResponse.json({ success: false, error_code: "DB", message: affErr.message }, { status: 500 });
 
-  let ordersQuery = db.from("orders").select("affiliate_id, affiliate, status, payout_amount, country, created_at");
+  let ordersQuery = db.from("orders").select("id, affiliate_id, affiliate, status, payout_amount, country, created_at");
   if (from) ordersQuery = ordersQuery.gte("created_at", from);
   if (to) ordersQuery = ordersQuery.lte("created_at", `${to}T23:59:59`);
   const { data: orders, error: ordErr } = await ordersQuery;
   if (ordErr) return NextResponse.json({ success: false, error_code: "DB", message: ordErr.message }, { status: 500 });
+
+  // "Livré" historique : status_history garde l'ancien slug "delivered" même
+  // après la consolidation (pas de FK dessus), donc on peut toujours savoir
+  // quelles commandes ont un jour été marquées livrées.
+  const orderIds = (orders ?? []).map((o) => o.id);
+  const deliveredIds = new Set<string>();
+  if (orderIds.length > 0) {
+    const { data: deliveredHistory } = await db
+      .from("status_history")
+      .select("order_id")
+      .eq("to_status", "delivered")
+      .in("order_id", orderIds);
+    for (const h of deliveredHistory ?? []) deliveredIds.add(h.order_id);
+  }
 
   type Stats = { total_orders: number; confirmed_orders: number; delivered_orders: number; total_payout: number };
   const emptyStats = (): Stats => ({ total_orders: 0, confirmed_orders: 0, delivered_orders: 0, total_payout: 0 });
@@ -68,7 +83,7 @@ export async function GET(req: Request) {
         s.confirmed_orders += 1;
         s.total_payout += Number(o.payout_amount) || 0;
       }
-      if (DELIVERED.has(o.status)) s.delivered_orders += 1;
+      if (deliveredIds.has(o.id)) s.delivered_orders += 1;
     }
     statsByNetwork.set(o.affiliate_id, netStats);
     statsByAffiliateKey.set(affKey, affStats);

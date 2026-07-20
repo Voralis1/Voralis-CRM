@@ -5,7 +5,7 @@ import { accountNameBelongsToBuyer } from "@/lib/mediaBuyerAccounts";
 import { getServerT } from "@/i18n/server";
 import KpiCard from "@/components/KpiCard";
 
-const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered"]);
+const CONFIRMED = new Set(["confirmed"]);
 const money = (n: number) => `$${n.toFixed(2)}`;
 const div = (a: number, b: number) => (b > 0 ? money(a / b) : "—");
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 1000) / 10}%` : "—");

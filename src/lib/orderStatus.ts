@@ -56,3 +56,47 @@ export async function getOrderStatusBySlug(db: any, slug: string): Promise<Order
 export function statusMeta(statuses: OrderStatusRow[], slug: string): OrderStatusRow | undefined {
   return statuses.find((s) => s.slug === slug);
 }
+
+// Titres détaillés : plusieurs par slug (ex. slug "confirmed" -> "Confirmé",
+// "Expédié", "En livraison", "Livré"). Le slug pilote toujours payout/postback/
+// groupes de stats ; le titre choisi n'est qu'un affichage plus précis,
+// mémorisé sur la commande (orders.status_title_id).
+export interface StatusTitleRow {
+  id: number;
+  slug: string;
+  title: string;
+  sortOrder: number;
+}
+
+function fromTitleDbRow(row: any): StatusTitleRow {
+  return { id: row.id, slug: row.slug, title: row.title, sortOrder: row.sort_order };
+}
+
+export async function getStatusTitles(db: any): Promise<StatusTitleRow[]> {
+  const { data, error } = await db
+    .from("status_titles")
+    .select("id, slug, title, sort_order")
+    .order("slug", { ascending: true })
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(fromTitleDbRow);
+}
+
+// Lookup pur par id de titre (pour afficher le titre précis d'une commande
+// à partir de son status_title_id, avec repli sur le titre générique du
+// slug si aucun titre précis n'est mémorisé).
+export function titleMeta(titles: StatusTitleRow[], titleId: number | null | undefined): StatusTitleRow | undefined {
+  if (titleId == null) return undefined;
+  return titles.find((t) => t.id === titleId);
+}
+
+// Libellé à afficher pour une commande : le titre précis choisi si présent,
+// sinon le titre générique du slug.
+export function displayStatusLabel(
+  statuses: OrderStatusRow[],
+  titles: StatusTitleRow[],
+  slug: string,
+  titleId: number | null | undefined
+): string {
+  return titleMeta(titles, titleId)?.title ?? statusMeta(statuses, slug)?.title ?? slug;
+}
