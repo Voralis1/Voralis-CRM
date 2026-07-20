@@ -117,6 +117,7 @@ export interface BulkUpdateResult {
   updated: string[];
   notFound: string[];
   failed: string[];
+  alreadyInStatus: string[];
   error?: string;
 }
 
@@ -131,6 +132,7 @@ export async function bulkChangeStatus(
       updated: [],
       notFound: [],
       failed: [],
+      alreadyInStatus: [],
       error: "Action réservée aux administrateurs.",
     };
 
@@ -142,7 +144,7 @@ export async function bulkChangeStatus(
     new Set(publicIds.map((id) => id.trim()).filter((id) => id !== ""))
   );
   if (ids.length === 0)
-    return { updated: [], notFound: [], failed: [], error: "Aucun ID fourni." };
+    return { updated: [], notFound: [], failed: [], alreadyInStatus: [], error: "Aucun ID fourni." };
 
   // Charge les commandes correspondantes (+ le produit pour le payout).
   const { data: orders, error: selectError } = await db
@@ -151,7 +153,7 @@ export async function bulkChangeStatus(
     .in("public_id", ids);
 
   if (selectError)
-    return { updated: [], notFound: [], failed: [], error: selectError.message };
+    return { updated: [], notFound: [], failed: [], alreadyInStatus: [], error: selectError.message };
 
   const found = orders ?? [];
   const foundIds = new Set(found.map((o) => o.public_id));
@@ -159,9 +161,17 @@ export async function bulkChangeStatus(
 
   const updated: string[] = [];
   const failed: string[] = [];
+  const alreadyInStatus: string[] = [];
   let firstError: string | undefined;
 
   for (const order of found) {
+    // La commande est déjà dans le statut cible : rien à faire, on le
+    // signale distinctement plutôt que de compter un "update" fictif.
+    if (order.status === next) {
+      alreadyInStatus.push(order.public_id);
+      continue;
+    }
+
     const { data: product } = await db
       .from("project_products")
       .select("payout, currency, payout_model")
@@ -219,7 +229,7 @@ export async function bulkChangeStatus(
   revalidatePath("/admin/orders");
   revalidatePath("/admin/orders-processing");
   revalidatePath("/panel/leads");
-  return { updated, notFound, failed, error: firstError };
+  return { updated, notFound, failed, alreadyInStatus, error: firstError };
 }
 
 // (admin) attribue un rôle à un compte existant par email

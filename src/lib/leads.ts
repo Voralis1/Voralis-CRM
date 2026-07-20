@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { nextOrderPublicId } from "@/lib/orderId";
+import { dispatchPending } from "@/lib/postback";
 import type { LeadInput } from "@/lib/validation";
 
 export type IngestResult =
@@ -113,6 +114,15 @@ export async function ingestLead(
     await db
       .from("affiliate")
       .upsert({ name: lead.affiliate, network_id: affiliateId }, { onConflict: "network_id,name", ignoreDuplicates: true });
+  }
+
+  // Envoi immédiat du postback "new" (enfilé par le trigger DB à l'insertion
+  // ci-dessus), best-effort : borné à ce seul lead pour ne pas ajouter la
+  // latence du backlog global d'autres affiliés sur cette API publique.
+  try {
+    await dispatchPending(1, created.id);
+  } catch {
+    /* le cron réessaiera */
   }
 
   return { ok: true, lead_id: created.public_id, status: created.status };

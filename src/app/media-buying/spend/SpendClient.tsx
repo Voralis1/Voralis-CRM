@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
 import { updateSpend, deleteSpend } from "./actions";
+import { SpendFilter, type SpendFilters } from "./SpendFilter";
 
 type SpendRow = {
   id: number;
@@ -18,20 +19,7 @@ type SpendRow = {
   ctr: number | null;
 };
 
-type Filters = {
-  date: string;
-  account_name: string;
-  country: string;
-  campaign: string;
-  impressions: string;
-  clicks: string;
-  ctr: string;
-  leads: string;
-  spend: string;
-  cpl: string;
-};
-
-const EMPTY_FILTERS: Filters = {
+const EMPTY_FILTERS: SpendFilters = {
   date: "", account_name: "", country: "", campaign: "",
   impressions: "", clicks: "", ctr: "", leads: "", spend: "", cpl: "",
 };
@@ -53,9 +41,7 @@ export default function SpendClient({
   const [form, setForm] = useState({ date: "", account_name: "", country: "", campaign: "", clicks: "", impressions: "", leads: "", amount: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS });
-
-  const setFilter = (k: keyof Filters, v: string) => setFilters((f) => ({ ...f, [k]: v }));
+  const [filters, setFilters] = useState<SpendFilters>({ ...EMPTY_FILTERS });
 
   const filteredRows = useMemo(() => {
     return rows.filter((s) =>
@@ -183,6 +169,12 @@ export default function SpendClient({
         </div>
       )}
 
+      <div className="text-sm text-ink-muted">
+        {filteredRows.length} {t("mb.spend.of")} {rows.length} {t("mb.spend.summary")}
+      </div>
+
+      <SpendFilter onFiltersChange={setFilters} />
+
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[1100px]">
           <thead className="bg-elevated">
@@ -198,19 +190,6 @@ export default function SpendClient({
               <th className="th">{t("mb.spend.amount")}</th>
               <th className="th">{t("mb.spend.cpl")}</th>
               <th className="th">{t("mb.spend.thAction")}</th>
-            </tr>
-            <tr className="bg-elevated">
-              {(["date", "account_name", "country", "campaign", "impressions", "clicks", "ctr", "leads", "spend", "cpl"] as const).map((k) => (
-                <th key={k} className="th pt-0">
-                  <input
-                    value={filters[k]}
-                    onChange={(e) => setFilter(k, e.target.value)}
-                    className="input h-7 w-full text-xs font-normal"
-                    placeholder={t("mb.spend.filterPlaceholder")}
-                  />
-                </th>
-              ))}
-              <th className="th pt-0" />
             </tr>
           </thead>
           <tbody>

@@ -103,6 +103,8 @@ export const admin: Record<string, Record<string, any>> = {
         failedPlural: "échecs",
         notFound: "identifiant introuvable",
         notFoundPlural: "identifiants introuvables",
+        alreadyAtStatus: "a déjà le statut",
+        alreadyAtStatusPlural: "ont déjà le statut",
       },
       products: {
         title: "Gestion de produits",
@@ -426,6 +428,8 @@ export const admin: Record<string, Record<string, any>> = {
         failedPlural: "failures",
         notFound: "ID not found",
         notFoundPlural: "IDs not found",
+        alreadyAtStatus: "already has the status",
+        alreadyAtStatusPlural: "already have the status",
       },
       products: {
         title: "Product management",
@@ -749,6 +753,8 @@ export const admin: Record<string, Record<string, any>> = {
         failedPlural: "falhas",
         notFound: "identificador não encontrado",
         notFoundPlural: "identificadores não encontrados",
+        alreadyAtStatus: "já tem o status",
+        alreadyAtStatusPlural: "já têm o status",
       },
       products: {
         title: "Gestão de produtos",
@@ -1072,6 +1078,8 @@ export const admin: Record<string, Record<string, any>> = {
         failedPlural: "ошибок",
         notFound: "идентификатор не найден",
         notFoundPlural: "идентификаторов не найдено",
+        alreadyAtStatus: "уже имеет статус",
+        alreadyAtStatusPlural: "уже имеют статус",
       },
       products: {
         title: "Управление товарами",

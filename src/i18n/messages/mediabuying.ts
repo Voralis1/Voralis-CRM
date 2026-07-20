@@ -64,6 +64,10 @@ export const mediabuying: Record<string, Record<string, any>> = {
       spend: {
         title: "Dépenses des publicités",
         subtitle: "Une ligne par campagne et par jour, par compte publicitaire (en USD).",
+        filters: "Filtres",
+        reset: "Réinitialiser",
+        of: "sur",
+        summary: "dépenses affichées",
         filterPlaceholder: "Filtrer…",
         editSpend: "Modifier la dépense",
         newSpend: "Nouvelle dépense",
@@ -200,6 +204,10 @@ export const mediabuying: Record<string, Record<string, any>> = {
       spend: {
         title: "Ad spend",
         subtitle: "One row per campaign, per day, per ad account (in USD).",
+        filters: "Filters",
+        reset: "Reset",
+        of: "of",
+        summary: "spend rows shown",
         filterPlaceholder: "Filter…",
         editSpend: "Edit spend",
         newSpend: "New spend",

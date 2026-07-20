@@ -298,7 +298,7 @@ Créée automatiquement à l'inscription (trigger `on_auth_user_created`).
 | `color` | text | défaut classes Tailwind `bg-slate-100 text-slate-700` |
 | `created_at` | timestamptz | défaut `now()` |
 
-**Contenu réel actuel (live, 15 lignes — géré depuis l'admin, peut évoluer) :**
+**Contenu réel actuel (live, 14 lignes — géré depuis l'admin, peut évoluer) :**
 
 | slug | title | group_name |
 |---|---|---|
@@ -315,13 +315,19 @@ Créée automatiquement à l'inscription (trigger `on_auth_user_created`).
 | `rejected` | Annulé (client) | annulé |
 | `cancelled` | Annulé | annulé |
 | `duplicate` | Doublon | double |
-| `trash` | Spam/Erreur | spam/erreur |
-| `spam` | spam | spam/erreur |
+| `spam` | Spam/Erreur | spam/erreur |
 
-> `test_confirmed` et `spam` ont été ajoutés après coup depuis l'écran admin
-> « Gestion des statuts » — ils n'existent dans **aucun** fichier `.sql` du
-> repo. C'est le point clé de `migrate_status_unlimited.sql` : un admin peut
-> créer un statut à tout moment sans migration.
+> `test_confirmed` a été ajouté après coup depuis l'écran admin « Gestion
+> des statuts » — il n'existe dans **aucun** fichier `.sql` du repo. C'est
+> le point clé de `migrate_status_unlimited.sql` : un admin peut créer un
+> statut à tout moment sans migration.
+>
+> L'ancien slug `trash` a été renommé en `spam` (2026-07-20, voir
+> `supabase/rename_trash_to_spam.sql`) : le tracker d'un affilié
+> (kma.biz/trackerlead.biz) rejetait les postbacks avec `status=trash`
+> (HTTP 400 "Status must be defined") car son système attend le mot
+> `spam` pour cette catégorie de lead. Toutes les commandes et l'historique
+> existants ont été re-pointés vers le nouveau slug.
 
 ### `admin` — fiches du personnel
 | Colonne | Type | Contrainte |
@@ -345,8 +351,8 @@ pour compatibilité historique ; le modèle courant utilisé par l'app est
 |---|---|---|
 | `orders.status` | `order_status` — enum Postgres à 13 valeurs figées | `text`, contraint par **FK vers `order_statuses.slug`** (illimité, éditable depuis l'admin) — voir `migrate_status_unlimited.sql` |
 | `order_statuses.id` | `text` (le slug servait de clé primaire) | `bigint` auto-incrémenté ; l'ancien `id` a été renommé en `slug` (unique, pas PK) |
-| Statuts existants | 13 valeurs (`new`…`cancelled`) | 15 lignes, incluant `test_confirmed` et `spam` ajoutés après coup |
-| `orders.public_id` défaut SQL | — | `'VL-' || année || '-' || lpad(nextval('order_seq'),6,'0')` — **mais jamais utilisé en pratique** : `ingestLead()` (`src/lib/leads.ts`) fournit toujours explicitement un `public_id` au format `000001` généré côté application (`src/lib/orderId.ts`), donc le défaut SQL ne sert que de filet de sécurité théorique |
+| Statuts existants | 13 valeurs (`new`…`cancelled`), dont `trash` | 14 lignes : `test_confirmed` ajouté après coup, `trash` renommé en `spam` (voir §5) |
+| `orders.public_id` défaut SQL | — | `'VL-' \|\| année \|\| '-' \|\| lpad(nextval('order_seq'),6,'0')` — **mais jamais utilisé en pratique** : `ingestLead()` (`src/lib/leads.ts`) fournit toujours explicitement un `public_id` généré côté application (`src/lib/orderId.ts`), format `V` + compteur (ex. `V220`), donc le défaut SQL ne sert que de filet de sécurité théorique |
 | `user_role` | décrit comme n'ayant plus `agent` | le type enum contient toujours `agent` (juste plus assigné) |
 
 **Recommandation** : pour toute question sur le schéma réel, préférer une

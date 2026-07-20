@@ -1,7 +1,7 @@
 // Calcul partagé du taux de confirmation d'un produit à partir des leads.
-// confirmés = statut confirmé ou au-delà ; valides = hors duplicate/trash.
+// confirmés = statut confirmé ou au-delà ; valides = hors duplicate/spam.
 const CONFIRMED = new Set(["confirmed", "shipped", "in_delivery", "delivered", "returned", "cancelled"]);
-const EXCLUDED = new Set(["duplicate", "trash"]);
+const EXCLUDED = new Set(["duplicate", "spam"]);
 const norm = (v: any) => String(v ?? "").trim().toLowerCase();
 
 export type RateOrder = { status: string; product_id: string | null; product: string | null };

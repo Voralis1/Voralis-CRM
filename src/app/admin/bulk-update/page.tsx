@@ -125,6 +125,21 @@ export default function BulkUpdatePage() {
               <span className="font-mono">{result.notFound.join(", ")}</span>
             </div>
           )}
+          {result.alreadyInStatus.length > 0 && (
+            <div className="alert alert-warning space-y-1">
+              <div>
+                {result.alreadyInStatus.length}{" "}
+                {result.alreadyInStatus.length > 1 ? t("adm.bulk.orderPlural") : t("adm.bulk.orderSingular")}{" "}
+                {result.alreadyInStatus.length > 1 ? t("adm.bulk.alreadyAtStatusPlural") : t("adm.bulk.alreadyAtStatus")} «&nbsp;{statusLabel(status)}&nbsp;» :
+              </div>
+              {result.alreadyInStatus.map((id) => (
+                <div key={id} className="text-xs">
+                  {t("adm.orders.phOrderId")} <span className="font-mono">{id}</span>{" "}
+                  {t("adm.bulk.alreadyAtStatus")} «&nbsp;{statusLabel(status)}&nbsp;».
+                </div>
+              ))}
+            </div>
+          )}
           {result.error && result.failed.length === 0 && (
             <div className="alert alert-danger">{result.error}</div>
           )}

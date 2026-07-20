@@ -46,20 +46,25 @@ function sign(secret: string, payload: string): string {
 }
 
 // Traite jusqu'à `limit` postbacks en attente (ou en échec sous max_attempts).
-// Appelé par le cron /api/internal/dispatch ET inline après un changement de statut.
-export async function dispatchPending(limit = 25): Promise<{
+// Appelé par le cron /api/internal/dispatch, inline après un changement de
+// statut, ET inline après la création d'un lead (avec `orderId` fourni pour
+// ne dispatcher QUE le postback de ce lead précis, sans latence ajoutée par
+// le backlog global d'autres affiliés sur l'API publique de création).
+export async function dispatchPending(limit = 25, orderId?: string): Promise<{
   processed: number;
   sent: number;
   failed: number;
 }> {
   const db = createAdminClient();
 
-  const { data: rows } = await db
+  let query = db
     .from("postbacks")
     .select("id, order_id, affiliate_id, status, method, attempts, max_attempts")
     .in("state", ["pending", "failed"])
     .order("created_at", { ascending: true })
     .limit(limit);
+  if (orderId) query = query.eq("order_id", orderId);
+  const { data: rows } = await query;
 
   if (!rows || rows.length === 0) return { processed: 0, sent: 0, failed: 0 };
 
