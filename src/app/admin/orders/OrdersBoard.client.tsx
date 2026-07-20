@@ -6,7 +6,7 @@ import { ExportButton } from "./ExportButton";
 import { OrdersFilter, OrderFilters } from "./OrdersFilter";
 import { OrdersTable } from "./OrdersTable";
 import { bulkChangeStatus, markOrdersExported, deleteOrder } from "./actions";
-import { statusMeta, type OrderStatusRow, type StatusTitleRow } from "@/lib/orderStatus";
+import { displayStatusLabel, type OrderStatusRow, type StatusTitleRow } from "@/lib/orderStatus";
 import PieChart from "@/components/PieChart";
 
 interface OrdersBoardClientProps {
@@ -23,7 +23,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
     product: "",
     country: "",
     affiliate_name: "",
-    status: "",
+    statusTitleId: "",
     first_name: "",
     phone: "",
   });
@@ -73,7 +73,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
       (!filters.product || (o.product || "").toLowerCase().includes(filters.product.toLowerCase())) &&
       (!filters.country || (o.country || "").toLowerCase().includes(filters.country.toLowerCase())) &&
       (!filters.affiliate_name || (affiliates?.name || "").toLowerCase().includes(filters.affiliate_name.toLowerCase())) &&
-      (!filters.status || o.status === filters.status) &&
+      (!filters.statusTitleId || String(o.status_title_id ?? "") === filters.statusTitleId) &&
       (!filters.first_name || fullName.toLowerCase().includes(filters.first_name.toLowerCase())) &&
       (!filters.phone || o.phone.toLowerCase().includes(filters.phone.toLowerCase()))
     );
@@ -101,9 +101,12 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
 
   const statusChartData = Object.values(
     filteredRows.reduce<Record<string, { label: string; value: number }>>((acc, o) => {
-      const label = statusMeta(statuses, o.status)?.title ?? o.status;
-      acc[o.status] ??= { label, value: 0 };
-      acc[o.status].value += 1;
+      // Clé par titre précis (pas juste le slug), pour que le camembert
+      // distingue par ex. « unreached » et « reminder » sous "processing".
+      const key = o.status_title_id != null ? `t:${o.status_title_id}` : `s:${o.status}`;
+      const label = displayStatusLabel(statuses, titles, o.status, o.status_title_id);
+      acc[key] ??= { label, value: 0 };
+      acc[key].value += 1;
       return acc;
     }, {})
   );
@@ -218,7 +221,7 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
         </div>
       )}
 
-      <OrdersFilter onFiltersChange={setFilters} statuses={statuses} />
+      <OrdersFilter onFiltersChange={setFilters} statuses={statuses} titles={titles} />
 
       <OrdersTable
         rows={filteredRows}

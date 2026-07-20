@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { nextOrderPublicId } from "@/lib/orderId";
 import { getMyNetworkId } from "@/lib/auth";
+import { getDefaultTitleId } from "@/lib/orderStatus";
 
 // Résout un produit du catalogue par son ID (cible de orders.product_id).
 async function resolveProduct(db: any, productId: string): Promise<{ id: string; name: string; payout: number | null }> {
@@ -41,7 +42,14 @@ export async function updateOrder(orderId: string, data: {
   if (data.country !== undefined) patch.country = data.country;
   if (data.comment !== undefined) patch.comment = data.comment;
   if (data.payout_amount !== undefined) patch.payout_amount = data.payout_amount;
-  if (data.status !== undefined) patch.status = data.status;
+  if (data.status !== undefined) {
+    patch.status = data.status;
+    // L'affilié ne choisit qu'un slug (pas de titre précis dans ce
+    // formulaire) : on pose le titre par défaut du nouveau slug pour ne
+    // pas laisser un titre d'un ancien statut incohérent.
+    const defaultTitleId = await getDefaultTitleId(db, data.status);
+    if (defaultTitleId != null) patch.status_title_id = defaultTitleId;
+  }
   if (data.affiliate !== undefined) patch.affiliate = data.affiliate?.trim() || null;
   if (data.product_id) {
     const product = await resolveProduct(db, data.product_id);
@@ -106,6 +114,7 @@ export async function createOrder(data: {
   // 2) Insérer la commande avec un identifiant public numérique.
   //    L'« affiliate » (sous-affilié) est stocké en texte libre dans `affiliate`.
   const publicId = await nextOrderPublicId(db);
+  const defaultTitleId = await getDefaultTitleId(db, data.status);
   const { error } = await db.from("orders").insert([
     {
       public_id: publicId,
@@ -118,6 +127,7 @@ export async function createOrder(data: {
       country: data.country,
       address: data.address,
       status: data.status,
+      ...(defaultTitleId != null ? { status_title_id: defaultTitleId } : {}),
       payout_amount: product.payout,
       comment: data.comment,
       affiliate: data.affiliate?.trim() || null,

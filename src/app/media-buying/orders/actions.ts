@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getDefaultTitleId } from "@/lib/orderStatus";
 import { revalidatePath } from "next/cache";
 
 async function myUserId(): Promise<string | null> {
@@ -33,6 +34,8 @@ export async function createMbOrder(data: MbOrderInput) {
     throw new Error("Prénom et téléphone obligatoires.");
 
   const db = createAdminClient();
+  const status = data.status || "new";
+  const defaultTitleId = await getDefaultTitleId(db, status);
   const { error } = await db.from("mediabuyers_orders").insert({
     media_buyer_id: uid,
     product: data.product || null,
@@ -45,7 +48,8 @@ export async function createMbOrder(data: MbOrderInput) {
     city: data.city || null,
     quantity: data.quantity || 1,
     payout_amount: data.payout_amount ?? null,
-    status: data.status || "new",
+    status,
+    ...(defaultTitleId != null ? { status_title_id: defaultTitleId } : {}),
     comment: data.comment || null,
   });
   if (error) throw new Error(`Erreur de création: ${error.message}`);

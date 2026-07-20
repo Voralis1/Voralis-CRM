@@ -90,6 +90,29 @@ export function titleMeta(titles: StatusTitleRow[], titleId: number | null | und
   return titles.find((t) => t.id === titleId);
 }
 
+// Résout le titre par défaut (premier par tri) d'un slug donné — utilisé à
+// la création d'une commande pour poser un status_title_id cohérent dès le
+// départ (sinon elle serait invisible dans un filtre par titre tant qu'un
+// admin ne lui a pas choisi un titre explicitement).
+// Défensif : renvoie null sans lever si la table status_titles n'existe pas
+// encore (migration multiple_titles_per_status.sql pas encore exécutée),
+// pour ne jamais casser la création de commande.
+export async function getDefaultTitleId(db: any, slug: string): Promise<number | null> {
+  try {
+    const { data, error } = await db
+      .from("status_titles")
+      .select("id")
+      .eq("slug", slug)
+      .order("sort_order", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) return null;
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Libellé à afficher pour une commande : le titre précis choisi si présent,
 // sinon le titre générique du slug.
 export function displayStatusLabel(

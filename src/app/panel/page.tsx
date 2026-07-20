@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyNetworkId } from "@/lib/auth";
 import type { OrderStatus } from "@/lib/types";
-import { getOrderStatuses, statusMeta } from "@/lib/orderStatus";
+import { getOrderStatuses, getStatusTitles, displayStatusLabel } from "@/lib/orderStatus";
 import { getServerT } from "@/i18n/server";
 import HeroBanner from "@/components/HeroBanner";
 import KpiCard from "@/components/KpiCard";
@@ -11,12 +11,13 @@ export default async function PanelDashboard() {
   const t = getServerT();
   const supabase = createClient();
   const statuses = await getOrderStatuses(supabase);
+  const titles = await getStatusTitles(supabase);
   // Isolation : un affilié ne voit QUE ses propres leads (+ RLS en filet).
   const networkId = await getMyNetworkId();
   const { data: orders } = networkId
     ? await supabase
         .from("orders")
-        .select("status, product, product_id, paid_at")
+        .select("status, status_title_id, product, product_id, paid_at")
         .eq("affiliate_id", networkId)
     : { data: [] };
 
@@ -46,13 +47,17 @@ export default async function PanelDashboard() {
   const confRate = total ? Math.round((confirmed / total) * 100) : 0;
   const cancRate = total ? Math.round((cancelled / total) * 100) : 0;
 
-  // Répartition par statut (pour le camembert).
-  const statusCounts = new Map<string, number>();
-  for (const r of rows) statusCounts.set(r.status, (statusCounts.get(r.status) ?? 0) + 1);
-  const statusData = Array.from(statusCounts.entries()).map(([s, value]) => ({
-    label: statusMeta(statuses, s)?.title ?? s,
-    value,
-  }));
+  // Répartition par statut (pour le camembert), par titre précis (pas
+  // juste le slug) pour distinguer par ex. « unreached » et « reminder ».
+  const statusCounts = new Map<string, { label: string; value: number }>();
+  for (const r of rows) {
+    const key = r.status_title_id != null ? `t:${r.status_title_id}` : `s:${r.status}`;
+    const label = displayStatusLabel(statuses, titles, r.status, r.status_title_id);
+    const entry = statusCounts.get(key) ?? { label, value: 0 };
+    entry.value += 1;
+    statusCounts.set(key, entry);
+  }
+  const statusData = Array.from(statusCounts.values());
 
   return (
     <div className="space-y-6">

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
-import type { OrderStatusRow } from "@/lib/orderStatus";
+import type { OrderStatusRow, StatusTitleRow } from "@/lib/orderStatus";
 
 interface OrdersFilterProps {
   onFiltersChange: (filters: OrderFilters) => void;
   statuses: OrderStatusRow[];
+  titles: StatusTitleRow[];
 }
 
 export interface OrderFilters {
@@ -14,23 +15,26 @@ export interface OrderFilters {
   product: string;
   country: string;
   affiliate_name: string;
-  status: string;
+  // Id du titre précis choisi (pas juste le slug) — chaîne vide = tous.
+  statusTitleId: string;
   first_name: string;
   phone: string;
 }
 
-export function OrdersFilter({ onFiltersChange, statuses }: OrdersFilterProps) {
+const EMPTY_FILTERS: OrderFilters = {
+  public_id: "",
+  product: "",
+  country: "",
+  affiliate_name: "",
+  statusTitleId: "",
+  first_name: "",
+  phone: "",
+};
+
+export function OrdersFilter({ onFiltersChange, statuses, titles }: OrdersFilterProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [filters, setFilters] = useState<OrderFilters>({
-    public_id: "",
-    product: "",
-    country: "",
-    affiliate_name: "",
-    status: "",
-    first_name: "",
-    phone: "",
-  });
+  const [filters, setFilters] = useState<OrderFilters>({ ...EMPTY_FILTERS });
 
   const activeCount = Object.values(filters).filter((v) => v.trim() !== "").length;
 
@@ -41,18 +45,19 @@ export function OrdersFilter({ onFiltersChange, statuses }: OrdersFilterProps) {
   };
 
   const handleReset = () => {
-    const emptyFilters: OrderFilters = {
-      public_id: "",
-      product: "",
-      country: "",
-      affiliate_name: "",
-      status: "",
-      first_name: "",
-      phone: "",
-    };
-    setFilters(emptyFilters);
-    onFiltersChange(emptyFilters);
+    setFilters({ ...EMPTY_FILTERS });
+    onFiltersChange({ ...EMPTY_FILTERS });
   };
+
+  const titlesBySlug = (() => {
+    const map = new Map<string, StatusTitleRow[]>();
+    for (const ti of titles) {
+      const list = map.get(ti.slug) ?? [];
+      list.push(ti);
+      map.set(ti.slug, list);
+    }
+    return map;
+  })();
 
   return (
     <div className="card p-4">
@@ -116,15 +121,19 @@ export function OrdersFilter({ onFiltersChange, statuses }: OrdersFilterProps) {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <select
-          value={filters.status}
-          onChange={(e) => handleChange("status", e.target.value)}
+          value={filters.statusTitleId}
+          onChange={(e) => handleChange("statusTitleId", e.target.value)}
           className="input text-sm"
         >
           <option value="">{t("adm.orders.phStatus")}</option>
           {statuses.map((s) => (
-            <option key={s.slug} value={s.slug}>
-              {s.title}
-            </option>
+            <optgroup key={s.slug} label={s.title}>
+              {(titlesBySlug.get(s.slug) ?? []).map((ti) => (
+                <option key={ti.id} value={ti.id}>
+                  {ti.title}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <input

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { nextOrderPublicId } from "@/lib/orderId";
 import { dispatchPending } from "@/lib/postback";
+import { getDefaultTitleId } from "@/lib/orderStatus";
 import type { LeadInput } from "@/lib/validation";
 
 export type IngestResult =
@@ -57,6 +58,14 @@ export async function ingestLead(
     }
   }
 
+  // Titre précis par défaut du statut "new", pour que le lead soit visible
+  // dans un filtre par titre dès sa création (pas seulement après qu'un
+  // admin lui choisisse un titre). Omis si la table status_titles n'existe
+  // pas encore (migration multiple_titles_per_status.sql pas encore
+  // exécutée) : on ne référence alors jamais status_title_id, pour ne
+  // jamais casser l'insertion selon l'état de la migration.
+  const defaultTitleId = await getDefaultTitleId(db, "new");
+
   // Insertion avec un identifiant public numérique (retry si collision).
   const baseRow = {
     affiliate_id: affiliateId,
@@ -80,6 +89,7 @@ export async function ingestLead(
     payout_amount: payoutAmount,
     payout_currency: payoutCurrency,
     status: "new",
+    ...(defaultTitleId != null ? { status_title_id: defaultTitleId } : {}),
   };
 
   let created: { id: string; public_id: string; status: string } | null = null;
