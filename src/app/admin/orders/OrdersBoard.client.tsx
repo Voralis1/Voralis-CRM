@@ -6,7 +6,7 @@ import { ExportButton } from "./ExportButton";
 import { OrdersFilter, OrderFilters } from "./OrdersFilter";
 import { OrdersTable } from "./OrdersTable";
 import { bulkChangeStatus, markOrdersExported, deleteOrder } from "./actions";
-import { displayStatusLabel, type OrderStatusRow, type StatusTitleRow } from "@/lib/orderStatus";
+import { displayStatusLabel, statusMeta, type OrderStatusRow, type StatusTitleRow } from "@/lib/orderStatus";
 import PieChart from "@/components/PieChart";
 
 interface OrdersBoardClientProps {
@@ -99,17 +99,25 @@ export default function OrdersBoardClient({ rows, emptyMessageKey, showStatusCha
   const selectedRows = filteredRows.filter((o) => selectedIds.has(o.id));
   const exportRows = selectedRows.length > 0 ? selectedRows : filteredRows;
 
+  // Camembert découpé par SLUG (comme avant), mais chaque part détaille en
+  // sous-lignes les titres précis qui la composent (ex. "processing" ->
+  // "unreached"/"reminder"/...), pour ne pas éclater le slug en tranches
+  // séparées tout en gardant la granularité par titre visible.
   const statusChartData = Object.values(
-    filteredRows.reduce<Record<string, { label: string; value: number }>>((acc, o) => {
-      // Clé par titre précis (pas juste le slug), pour que le camembert
-      // distingue par ex. « unreached » et « reminder » sous "processing".
-      const key = o.status_title_id != null ? `t:${o.status_title_id}` : `s:${o.status}`;
-      const label = displayStatusLabel(statuses, titles, o.status, o.status_title_id);
-      acc[key] ??= { label, value: 0 };
-      acc[key].value += 1;
-      return acc;
-    }, {})
-  );
+    filteredRows.reduce<Record<string, { label: string; value: number; subs: Record<string, { key: string; label: string; value: number }> }>>(
+      (acc, o) => {
+        const slugLabel = statusMeta(statuses, o.status)?.title ?? o.status;
+        acc[o.status] ??= { label: slugLabel, value: 0, subs: {} };
+        acc[o.status].value += 1;
+        const subKey = o.status_title_id != null ? String(o.status_title_id) : "default";
+        const subLabel = displayStatusLabel(statuses, titles, o.status, o.status_title_id);
+        acc[o.status].subs[subKey] ??= { key: subKey, label: subLabel, value: 0 };
+        acc[o.status].subs[subKey].value += 1;
+        return acc;
+      },
+      {}
+    )
+  ).map(({ label, value, subs }) => ({ label, value, sub: Object.values(subs) }));
 
   const applyBulkStatus = () => {
     if (selectedRows.length === 0 || !selectedBulkTitle) return;

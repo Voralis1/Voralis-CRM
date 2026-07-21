@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyNetworkId } from "@/lib/auth";
 import type { OrderStatus } from "@/lib/types";
-import { getOrderStatuses, getStatusTitles, displayStatusLabel } from "@/lib/orderStatus";
+import { getOrderStatuses, getStatusTitles, displayStatusLabel, statusMeta } from "@/lib/orderStatus";
 import { getServerT } from "@/i18n/server";
 import HeroBanner from "@/components/HeroBanner";
 import KpiCard from "@/components/KpiCard";
@@ -47,17 +47,26 @@ export default async function PanelDashboard() {
   const confRate = total ? Math.round((confirmed / total) * 100) : 0;
   const cancRate = total ? Math.round((cancelled / total) * 100) : 0;
 
-  // Répartition par statut (pour le camembert), par titre précis (pas
-  // juste le slug) pour distinguer par ex. « unreached » et « reminder ».
-  const statusCounts = new Map<string, { label: string; value: number }>();
+  // Répartition par statut (pour le camembert) : une part par SLUG, avec
+  // le détail des titres précis en sous-lignes (ex. "processing" ->
+  // "unreached"/"reminder"/...).
+  const statusCounts = new Map<string, { label: string; value: number; subs: Map<string, { key: string; label: string; value: number }> }>();
   for (const r of rows) {
-    const key = r.status_title_id != null ? `t:${r.status_title_id}` : `s:${r.status}`;
-    const label = displayStatusLabel(statuses, titles, r.status, r.status_title_id);
-    const entry = statusCounts.get(key) ?? { label, value: 0 };
+    const slugLabel = statusMeta(statuses, r.status)?.title ?? r.status;
+    const entry = statusCounts.get(r.status) ?? { label: slugLabel, value: 0, subs: new Map() };
     entry.value += 1;
-    statusCounts.set(key, entry);
+    const subKey = r.status_title_id != null ? String(r.status_title_id) : "default";
+    const subLabel = displayStatusLabel(statuses, titles, r.status, r.status_title_id);
+    const sub = entry.subs.get(subKey) ?? { key: subKey, label: subLabel, value: 0 };
+    sub.value += 1;
+    entry.subs.set(subKey, sub);
+    statusCounts.set(r.status, entry);
   }
-  const statusData = Array.from(statusCounts.values());
+  const statusData = Array.from(statusCounts.values()).map(({ label, value, subs }) => ({
+    label,
+    value,
+    sub: Array.from(subs.values()),
+  }));
 
   return (
     <div className="space-y-6">

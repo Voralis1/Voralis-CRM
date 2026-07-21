@@ -10,11 +10,24 @@ const PALETTE = [
 ];
 const OTHER_COLOR = "#94a3b8";
 
+export interface PieChartDatum {
+  label: string;
+  value: number;
+  // Sous-répartition (ex. titres précis d'un même slug), affichée en
+  // retrait sous la ligne principale sans influencer le découpage du
+  // camembert lui-même (toujours tracé au niveau `value`). `key` doit être
+  // stable et unique par groupe : deux sous-lignes peuvent afficher le
+  // même texte (ex. une commande orpheline sans titre précis retombe sur
+  // le même libellé que le titre par défaut du slug) sans être le même
+  // groupe, donc on ne peut pas utiliser le libellé comme clé React.
+  sub?: { key: string; label: string; value: number }[];
+}
+
 export default function PieChart({
   data,
   maxSlices = 6,
 }: {
-  data: { label: string; value: number }[];
+  data: PieChartDatum[];
   maxSlices?: number;
 }) {
   const sorted = [...data].filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
@@ -90,12 +103,29 @@ export default function PieChart({
         {slices.map((s, i) => {
           const pct = Math.round((s.value / total) * 1000) / 10;
           const color = s.label === "Autres" ? OTHER_COLOR : PALETTE[i % PALETTE.length];
+          const subItems = "sub" in s ? s.sub : undefined;
           return (
-            <li key={s.label} className="flex items-center gap-2 text-sm">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: color }} />
-              <span className="min-w-0 flex-1 truncate text-ink-muted">{s.label}</span>
-              <span className="font-mono font-semibold text-ink">{s.value}</span>
-              <span className="w-12 text-right font-mono text-xs text-ink-faint">{pct}%</span>
+            <li key={s.label}>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: color }} />
+                <span className="min-w-0 flex-1 truncate text-ink-muted">{s.label}</span>
+                <span className="font-mono font-semibold text-ink">{s.value}</span>
+                <span className="w-12 text-right font-mono text-xs text-ink-faint">{pct}%</span>
+              </div>
+              {subItems && subItems.length > 1 && (
+                <ul className="ml-[18px] mt-1 space-y-1 border-l border-line pl-3">
+                  {[...subItems].sort((a, b) => b.value - a.value).map((sub) => {
+                    const subPct = Math.round((sub.value / total) * 1000) / 10;
+                    return (
+                      <li key={sub.key} className="flex items-center gap-2 text-xs text-ink-faint">
+                        <span className="min-w-0 flex-1 truncate">{sub.label}</span>
+                        <span className="font-mono">{sub.value}</span>
+                        <span className="w-12 text-right font-mono">{subPct}%</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </li>
           );
         })}
